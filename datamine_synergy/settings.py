@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'analytics',  # Assurez-vous que cette ligne est présente
+    'analysis',  # Assurez-vous que cette ligne est présente
 ]
 
 
