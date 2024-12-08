@@ -21,4 +21,4 @@ jobs:
           smtp_username: ${{ secrets.SMTP_USERNAME }}
           smtp_password: ${{ secrets.SMTP_PASSWORD }}
           smtp_from_email: github@example.com
-          to_emails: "23015@esp.mr, 23014@esp.mr"
+          to_emails: "23015@esp.mr, 23014@esp.mr, 23231@esp.mr"
