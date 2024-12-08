@@ -1,0 +1,24 @@
+name: 'Vérification des dates d\'échéance des issues'
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # S'exécute quotidiennement à 1h00 UTC
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier les dates d'échéance et envoyer des notifications
+        uses: petrandr/duedate_reminders@latest
+        with:
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          project_number: 4 # Remplacez par le numéro de votre projet
+          notify_for: "expiring_issues"
+          duedate_field_name: "Due Date"
+          notification_type: "email"
+          smtp_server: smtp.example.com
+          smtp_port: 587
+          smtp_username: ${{ secrets.SMTP_USERNAME }}
+          smtp_password: ${{ secrets.SMTP_PASSWORD }}
+          smtp_from_email: github@example.com
+          to_emails: "23015@esp.mr, 23014@esp.mr"
