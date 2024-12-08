@@ -1,19 +1,55 @@
-name: 'Notification des dates d\'échéance'
+name: 'Rappel des tâches quotidiennes'
+
 on:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 8 * * *' # Exécution quotidienne à 8h00 UTC
 
 jobs:
-  send-reminders:
+  send-task-reminders:
     runs-on: ubuntu-latest
     steps:
-      - name: Envoi de notifications pour les échéances
-        uses: petrandr/duedate_reminders@latest
+      # Étape 1 : Récupérer les tâches assignées dans le projet
+      - name: Récupérer les tâches du projet
+        id: get-tasks
+        uses: actions/github-script@v6
         with:
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
-          smtp_server: "smtp.isms.esp.mr"
-          smtp_port: 587
-          smtp_username: ${{ secrets.SMTP_USERNAME }}
-          smtp_password: ${{ secrets.SMTP_PASSWORD }}
-          smtp_from_email: "20226@isms.esp.mr"
-          to_emails: "23015@esp.mr, 23014@esp.mr"
+          script: |
+            const projectNumber = 4; // Numéro du projet GitHub
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Récupérer les issues du projet
+            const issues = await github.issues.listForRepo({
+              owner,
+              repo,
+              state: "open"
+            });
+
+            // Filtrer les issues assignées
+            const assignedTasks = issues.data
+              .filter(issue => issue.assignees.length > 0)
+              .map(issue => ({
+                assignee: issue.assignees[0].email, // Utilise l'email de l'assigné
+                title: issue.title,
+                url: issue.html_url
+              }));
+
+            core.setOutput("assignedTasks", JSON.stringify(assignedTasks));
+
+      # Étape 2 : Envoyer des e-mails
+      - name: Envoyer les rappels par e-mail
+        uses: docker://docker.io/jumanjiman/sendemail:latest
+        with:
+          args: |
+            --smtp-server=smtp.isms.esp.mr
+            --port=587
+            --user=$SMTP_USERNAME
+            --password=$SMTP_PASSWORD
+            --from=$SMTP_USERNAME
+            --to={{ assignee_email }}
+            --subject="Rappel des tâches du projet GitHub"
+            --body="Bonjour,\n\nVoici vos tâches assignées pour le projet GitHub :\n\n{{ tasks_list }}\n\nBonne journée !"
+        env:
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          TASKS: ${{ steps.get-tasks.outputs.assignedTasks }}
