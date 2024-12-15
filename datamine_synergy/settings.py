@@ -66,11 +66,11 @@ WSGI_APPLICATION = 'datamine_synergy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Pie',  # Nom exact de la base de données
+        'NAME': 'pie',  # Nom exact de la base de données
         'USER': 'root',  # Utilisateur MySQL
-        'PASSWORD': '',  # Laissez vide si aucun mot de passe
+        'PASSWORD': 'Medlemin23014',  # Laissez vide si aucun mot de passe
         'HOST': '127.0.0.1',  # Serveur local
-        'PORT': '3306',       # Port par défaut pour MySQL
+        'PORT': '3307',       # Port par défaut pour MySQL
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
