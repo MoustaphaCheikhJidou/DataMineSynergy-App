@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Geochemical Report</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Geochemical Report</h1>
+    <p>Report Date: {{ report_date }}</p>
+
+    <h2>Data Table</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Hole ID</th>
+                <th>Depth</th>
+                <th>Lithology</th>
+                 <th>Longitude</th>
+                <th>Latitude</th>
+                <th>U</th>
+                <th>TH</th>
+                 <!-- Add the rest of your columns here -->
+                <th>V</th>
+                <th>SIO2</th>
+                <th>FEO</th>
+                <th>AL2O3</th>
+                <th>CAO</th>
+                <th>MGO</th>
+                <th>K2O</th>
+                <th>NA2O</th>
+                <th>TIO2</th>
+                 <th>BA</th>
+                <th>NB</th>
+                <th>RB</th>
+                <th>SR</th>
+                <th>ZN</th>
+                <th>ZR</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_data %}
+            <tr>
+                <td>{{ row.hole_id }}</td>
+                <td>{{ row.depth | floatformat:2 }}</td>
+                 <td>{{ row.lithology }}</td>
+                 <td>{{ row.Longitude | floatformat:4 }}</td>
+                <td>{{ row.Latitude | floatformat:4 }}</td>
+                <td>{{ row.U | floatformat:2 }}</td>
+                <td>{{ row.TH | floatformat:2 }}</td>
+                <td>{{ row.V | floatformat:2 }}</td>
+                  <td>{{ row.SIO2 | floatformat:2 }}</td>
+                <td>{{ row.FEO | floatformat:2 }}</td>
+                 <td>{{ row.AL2O3 | floatformat:2 }}</td>
+                <td>{{ row.CAO | floatformat:2 }}</td>
+                <td>{{ row.MGO | floatformat:2 }}</td>
+                <td>{{ row.K2O | floatformat:2 }}</td>
+                <td>{{ row.NA2O | floatformat:2 }}</td>
+                <td>{{ row.TIO2 | floatformat:2 }}</td>
+                <td>{{ row.BA | floatformat:2 }}</td>
+                <td>{{ row.NB | floatformat:2 }}</td>
+                 <td>{{ row.RB | floatformat:2 }}</td>
+                <td>{{ row.SR | floatformat:2 }}</td>
+                <td>{{ row.ZN | floatformat:2 }}</td>
+                 <td>{{ row.ZR | floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% for plot_html in plots_html %}
+        {{ plot_html|safe }}
+    {% endfor %}
+
+</body>
+</html>

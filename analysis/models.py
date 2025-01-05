@@ -2,318 +2,87 @@
 
 from django.db import models
 
-class Collars(models.Model):
-    id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    holeid = models.IntegerField(null=True, blank=True)
-    prospect = models.CharField(max_length=255, null=True, blank=True)
-    projection = models.CharField(max_length=255, null=True, blank=True)
-    easting = models.FloatField(null=True, blank=True)
-    northing = models.FloatField(null=True, blank=True)
-    survey_method = models.CharField(max_length=255, null=True, blank=True)
-    rl = models.FloatField(null=True, blank=True)
-    plotting_rl = models.FloatField(null=True, blank=True)
-    dip = models.FloatField(null=True, blank=True)
-    mag_declination = models.FloatField(null=True, blank=True)
-    azim_mag = models.FloatField(null=True, blank=True)
-    azim_utm = models.FloatField(null=True, blank=True)
-    total_depth = models.FloatField(null=True, blank=True)
-    logged_by = models.CharField(max_length=255, null=True, blank=True)
-    tenement_name = models.CharField(max_length=255, null=True, blank=True)
-    tenement_no = models.IntegerField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-    water_depth = models.FloatField(null=True, blank=True)
-    water_comments = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f"Collars {self.id}"
 
 
-class DHDrillType(models.Model):
-    id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    depth_from = models.FloatField(null=True, blank=True)
-    depth_to = models.FloatField(null=True, blank=True)
-    drill_type = models.CharField(max_length=255, null=True, blank=True)
-    hole_size = models.FloatField(null=True, blank=True)
-    drill_rig = models.CharField(max_length=255, null=True, blank=True)
-    casing_depth = models.FloatField(null=True, blank=True)
-    casing_type = models.CharField(max_length=255, null=True, blank=True)
-    drill_contractor = models.CharField(max_length=255, null=True, blank=True)
-    date_started = models.DateField(null=True, blank=True)
-    date_completed = models.DateField(null=True, blank=True)
-    core_boxes = models.IntegerField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f"DHDrillType {self.id}"
-
-
-class DHSurvey(models.Model):
-    id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    depth = models.FloatField(null=True, blank=True)
-    dip = models.FloatField(null=True, blank=True)
-    azim_mag = models.FloatField(null=True, blank=True)
-    azim_utm = models.FloatField(null=True, blank=True)
-    date_surveyed = models.DateField(null=True, blank=True)
-    dh_survey_instrument = models.CharField(max_length=255, null=True, blank=True)
-    valid = models.BooleanField(null=True, blank=True)
-    magnetic_field_n_t = models.FloatField(null=True, blank=True)
-    surveyed_by = models.CharField(max_length=255, null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f"DHSurvey {self.id}"
-
-
-class DHSamples(models.Model):
-    id = models.AutoField(primary_key=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    sample_id = models.CharField(max_length=255, null=True, blank=True)
-    depth_from = models.FloatField(null=True, blank=True)
-    depth_to = models.FloatField(null=True, blank=True)
-    interval = models.FloatField(null=True, blank=True)
-    samp_type = models.CharField(max_length=255, null=True, blank=True)
-    sample_sub_type = models.CharField(max_length=255, null=True, blank=True)
-    sample_weight_kg = models.FloatField(null=True, blank=True)
-    chk_type = models.CharField(max_length=255, null=True, blank=True)
-    parent_id = models.IntegerField(null=True, blank=True)
-    standard_id = models.CharField(max_length=255, null=True, blank=True)
-    sampled_by = models.CharField(max_length=255, null=True, blank=True)
-    date_sampled = models.DateField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f"DHSamples {self.id}"
-
-
-class DHGeology(models.Model):
-    id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
+class DrillHole(models.Model):
+    """Table principale des trous de forage"""
+    hole_id = models.CharField(max_length=50, primary_key=True)
     project = models.CharField(max_length=255, null=True, blank=True)
     prospect = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    depth_from = models.FloatField(null=True, blank=True)
-    depth_to = models.FloatField(null=True, blank=True)
-    flag = models.CharField(max_length=255, null=True, blank=True)
-    regolith = models.CharField(max_length=255, null=True, blank=True)
-    oxidation = models.CharField(max_length=255, null=True, blank=True)
-    moisture = models.CharField(max_length=255, null=True, blank=True)
-    weathering = models.CharField(max_length=255, null=True, blank=True)
-    hue = models.CharField(max_length=255, null=True, blank=True)
-    colour1 = models.CharField(max_length=255, null=True, blank=True)
-    colour2 = models.CharField(max_length=255, null=True, blank=True)
-    classifiers = models.CharField(max_length=255, null=True, blank=True)
-    grainsize = models.CharField(max_length=255, null=True, blank=True)
-    lithology1 = models.CharField(max_length=255, null=True, blank=True)
-    lith1_pct = models.FloatField(null=True, blank=True)
-    lithology2 = models.CharField(max_length=255, null=True, blank=True)
-    lith2_pct = models.FloatField(null=True, blank=True)
-    texture1 = models.CharField(max_length=255, null=True, blank=True)
-    texture2 = models.CharField(max_length=255, null=True, blank=True)
-    texture3 = models.CharField(max_length=255, null=True, blank=True)
-    rock_min1 = models.CharField(max_length=255, null=True, blank=True)
-    rock_min1_pct = models.FloatField(null=True, blank=True)
-    rock_min2 = models.CharField(max_length=255, null=True, blank=True)
-    rock_min2_pct = models.FloatField(null=True, blank=True)
-    rock_min3 = models.CharField(max_length=255, null=True, blank=True)
-    rock_min3_pct = models.FloatField(null=True, blank=True)
-    rock_min4 = models.CharField(max_length=255, null=True, blank=True)
-    rock_min4_pct = models.FloatField(null=True, blank=True)
-    rock_min5 = models.CharField(max_length=255, null=True, blank=True)
-    rock_min5_pct = models.FloatField(null=True, blank=True)
-    logged_by = models.CharField(max_length=255, null=True, blank=True)
-    date_logged = models.DateField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
+    easting = models.FloatField(null=True, blank=True)  # Add easting
+    northing = models.FloatField(null=True, blank=True) # Add northing
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['project']),
+            models.Index(fields=['prospect']),
+        ]
 
     def __str__(self):
-        return f"DHGeology {self.id}"
+        return f"Trou de forage {self.hole_id}"
 
 
-class DHScint(models.Model):
+class DrillInterval(models.Model):
+    """Table des intervalles de mesure avec géologie"""
     id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    depth_from = models.FloatField(null=True, blank=True)
-    depth_to = models.FloatField(null=True, blank=True)
-    average_cps = models.FloatField(null=True, blank=True)
-    average_us_h = models.FloatField(null=True, blank=True)
-    cb_e_th = models.FloatField(null=True, blank=True)
-    cb_e_u = models.FloatField(null=True, blank=True)
-    cb_k = models.FloatField(null=True, blank=True)
-    dip_core = models.FloatField(null=True, blank=True)
-    gb_e_t = models.FloatField(null=True, blank=True)
-    gb_e_u = models.FloatField(null=True, blank=True)
-    gb_k = models.FloatField(null=True, blank=True)
-    scintillometer = models.CharField(max_length=255, null=True, blank=True)
-    scintillometer_cps = models.FloatField(null=True, blank=True)
-    scintillometer1 = models.CharField(max_length=255, null=True, blank=True)
-    scintillometer1_cps = models.FloatField(null=True, blank=True)
-    scintillometer2 = models.CharField(max_length=255, null=True, blank=True)
-    scintillometer2_cps = models.FloatField(null=True, blank=True)
-    scintillometer3 = models.CharField(max_length=255, null=True, blank=True)
-    scintillometer3_cps = models.FloatField(null=True, blank=True)
-    scint_unit = models.CharField(max_length=255, null=True, blank=True)
-    ur_h = models.FloatField(null=True, blank=True)
-    dip = models.FloatField(null=True, blank=True)
-    logged_by = models.CharField(max_length=255, null=True, blank=True)
-    date_logged = models.DateField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
+    drill_hole = models.ForeignKey(DrillHole, on_delete=models.CASCADE, related_name='intervals')
+    depth_from = models.FloatField()
+    depth_to = models.FloatField()
+    lithology = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['drill_hole', 'depth_from', 'depth_to']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(depth_to__gt=models.F('depth_from')),
+                name='depth_check'
+            )
+        ]
 
     def __str__(self):
-        return f"DHScint {self.id}"
+        return f"Intervalle {self.depth_from}-{self.depth_to} du trou {self.drill_hole.hole_id}"
+
+    @property
+    def interval_id(self):
+        """Génère un ID unique pour l'intervalle"""
+        return f"{self.drill_hole.hole_id}{self.depth_from}{self.depth_to}"
 
 
-class DHMagSus(models.Model):
+class ChemicalAnalysis(models.Model):
+    """Table des analyses chimiques"""
     id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    depth_from = models.FloatField(null=True, blank=True)
-    depth_to = models.FloatField(null=True, blank=True)
-    mag_sus_instrument = models.CharField(max_length=255, null=True, blank=True)
-    mag_sus_unit = models.CharField(max_length=255, null=True, blank=True)
-    mag_sus1 = models.FloatField(null=True, blank=True)
-    mag_sus2 = models.FloatField(null=True, blank=True)
-    mag_sus3 = models.FloatField(null=True, blank=True)
-    mag_sus_average = models.FloatField(null=True, blank=True)
-    logged_by = models.CharField(max_length=255, null=True, blank=True)
-    date_logged = models.DateField(null=True, blank=True)
+    interval = models.ForeignKey(DrillInterval, on_delete=models.CASCADE, related_name='chemical_analyses')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['interval']),
+        ]
 
     def __str__(self):
-        return f"DHMagSus {self.id}"
+        return f"Analyse chimique de l'intervalle {self.interval}"
 
 
-class DHAssays(models.Model):
+class ElementValue(models.Model):
+    """Table pour stocker les valeurs des éléments chimiques"""
     id = models.AutoField(primary_key=True)
-    company = models.CharField(max_length=255, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    ownership = models.CharField(max_length=255, null=True, blank=True)
-    project = models.CharField(max_length=255, null=True, blank=True)
-    prospect = models.CharField(max_length=255, null=True, blank=True)
-    hole_id = models.IntegerField(null=True, blank=True)
-    sample_id = models.CharField(max_length=255, null=True, blank=True)
-    depth_from = models.FloatField(null=True, blank=True)
-    depth_to = models.FloatField(null=True, blank=True)
-    interval = models.FloatField(null=True, blank=True)
-    samp_type = models.CharField(max_length=255, null=True, blank=True)
-    sample_sub_type = models.CharField(max_length=255, null=True, blank=True)
-    sampled_by = models.CharField(max_length=255, null=True, blank=True)
-    date_sampled = models.DateField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-    au_ppm = models.FloatField(null=True, blank=True)
-    _75um_pct = models.FloatField(null=True, blank=True, verbose_name='-75µm_pct')
-    ag_ppm = models.FloatField(null=True, blank=True)
-    al_pct = models.FloatField(null=True, blank=True)
-    al2o3_pct = models.FloatField(null=True, blank=True)
-    as_ppm = models.FloatField(null=True, blank=True)
-    b_ppm = models.FloatField(null=True, blank=True)
-    ba_ppm = models.FloatField(null=True, blank=True)
-    bao_pct = models.FloatField(null=True, blank=True)
-    be_ppm = models.FloatField(null=True, blank=True)
-    bi_pct = models.FloatField(null=True, blank=True)
-    bi_ppm = models.FloatField(null=True, blank=True)
-    br_ppm = models.FloatField(null=True, blank=True)
-    c_pct = models.FloatField(null=True, blank=True)
-    ca_pct = models.FloatField(null=True, blank=True)
-    cao_pct = models.FloatField(null=True, blank=True)
-    cd_ppm = models.FloatField(null=True, blank=True)
-    ce_ppm = models.FloatField(null=True, blank=True)
-    cl_pct = models.FloatField(null=True, blank=True)
-    co_ppm = models.FloatField(null=True, blank=True)
-    co2_pct = models.FloatField(null=True, blank=True)
-    cr_ppm = models.FloatField(null=True, blank=True)
-    cr2o3_pct = models.FloatField(null=True, blank=True)
-    cs_ppm = models.FloatField(null=True, blank=True)
-    cu_pct = models.FloatField(null=True, blank=True)
-    cu_ppm = models.FloatField(null=True, blank=True)
-    cuo_pct = models.FloatField(null=True, blank=True)
-    dy_ppm = models.FloatField(null=True, blank=True)
-    er_ppm = models.FloatField(null=True, blank=True)
-    eu_ppm = models.FloatField(null=True, blank=True)
-    fe_pct = models.FloatField(null=True, blank=True)
-    fe2o3_pct = models.FloatField(null=True, blank=True)
-    ga_ppm = models.FloatField(null=True, blank=True)
-    gd_ppm = models.FloatField(null=True, blank=True)
-    ge_ppm = models.FloatField(null=True, blank=True)
-    hf_ppm = models.FloatField(null=True, blank=True)
-    hg_ppm = models.FloatField(null=True, blank=True)
-    ho_ppm = models.FloatField(null=True, blank=True)
-    in_ppm = models.FloatField(null=True, blank=True)
-    ir_ppb = models.FloatField(null=True, blank=True)
-    k_pct = models.FloatField(null=True, blank=True)
-    k2o_pct = models.FloatField(null=True, blank=True)
-    la_ppm = models.FloatField(null=True, blank=True)
-    li_ppm = models.FloatField(null=True, blank=True)
-    loi_pct = models.FloatField(null=True, blank=True)
-    lu_ppm = models.FloatField(null=True, blank=True)
-    mg_pct = models.FloatField(null=True, blank=True)
-    mgo_pct = models.FloatField(null=True, blank=True)
-    mn_ppm = models.FloatField(null=True, blank=True)
-    mno_pct = models.FloatField(null=True, blank=True)
-    mo_ppm = models.FloatField(null=True, blank=True)
-    na_pct = models.FloatField(null=True, blank=True)
-    na2o_pct = models.FloatField(null=True, blank=True)
-    nb_ppm = models.FloatField(null=True, blank=True)
-    nd_ppm = models.FloatField(null=True, blank=True)
-    ni_ppm = models.FloatField(null=True, blank=True)
-    p_ppm = models.FloatField(null=True, blank=True)
-    p2o5_pct = models.FloatField(null=True, blank=True)
-    pass2mm_pct = models.FloatField(null=True, blank=True)
-    pass75um_pct = models.FloatField(null=True, blank=True)
-    pb_ppm = models.FloatField(null=True, blank=True)
-    pbo_pct = models.FloatField(null=True, blank=True)
-    pd_ppm = models.FloatField(null=True, blank=True)
-    pr_ppm = models.FloatField(null=True, blank=True)
-    pt_ppm = models.FloatField(null=True, blank=True)
-    rb_ppm = models.FloatField(null=True, blank=True)
-    re_ppm = models.FloatField(null=True, blank=True)
-    s_pct = models.FloatField(null=True, blank=True)
-    sb_ppm = models.FloatField(null=True, blank=True)
-    sc_ppm = models.FloatField(null=True, blank=True)
-    se_ppm = models.FloatField(null=True, blank=True)
-    sio2_pct = models.FloatField(null=True, blank=True)
-    sm_ppm = models.FloatField(null=True, blank=True)
-    sn_ppm = models.FloatField(null=True, blank=True)
-    sr_ppm = models.FloatField(null=True, blank=True)
-    sro_pct = models.FloatField(null=True, blank=True)
-    ta_ppm = models.FloatField(null=True, blank=True)
-    tb_ppm = models.FloatField(null=True, blank=True)
-    te_ppm = models.FloatField(null=True, blank=True)
-    th_ppm = models.FloatField(null=True, blank=True)
-    ti_pct = models.FloatField(null=True, blank=True)
-    tio2_pct = models.FloatField(null=True, blank=True)
-    tl_ppm = models.FloatField(null=True, blank=True)
-    tm_ppm = models.FloatField(null=True, blank=True)
-    u_ppm = models.FloatField(null=True, blank=True)
-    v_ppm = models.FloatField(null=True, blank=True)
-    v2o5_pct = models.FloatField(null=True, blank=True)
-    w_ppm = models.FloatField(null=True, blank=True)
-    y_ppm = models.FloatField(null=True, blank=True)
-    yb_ppm = models.FloatField(null=True, blank=True)
-    zn_ppm = models.FloatField(null=True, blank=True)
-    zr_ppm = models.FloatField(null=True, blank=True)
-    batch_no = models.CharField(max_length=255, null=True, blank=True)
+    analysis = models.ForeignKey(ChemicalAnalysis, on_delete=models.CASCADE, related_name='element_values')
+    element = models.CharField(max_length=20)  # Augmenté pour accommoder les noms plus longs
+    value = models.FloatField()
+    unit = models.CharField(max_length=10)  # ppm, ppb, pct
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['element']),
+            models.Index(fields=['analysis']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(value__gte=0),
+                name='non_negative_value'
+            )
+        ]
 
     def __str__(self):
-        return f"DHAssays {self.id}"
+        return f"{self.element} ({self.value} {self.unit})"

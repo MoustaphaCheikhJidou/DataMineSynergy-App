@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="keywords" content="admin, dashboard">
+  <meta name="author" content="DexignZone">
+  <meta name="robots" content="index, follow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dompet : Payment Admin Template">
+  <meta property="og:title" content="Dompet : Payment Admin Template">
+  <meta property="og:description" content="Dompet : Payment Admin Template">
+  <meta property="og:image" content="https://dompet.dexignlab.com/xhtml/social-image.png">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- PAGE TITLE HERE -->
+  <title>Admin Dashboard</title>
+
+  <!-- FAVICONS ICON -->
+  <link rel="shortcut icon" type="image/png" href="images/favicon.png">
+
+  <link href="{% static 'vendor/jquery-nice-select/css/nice-select.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'vendor/nouislider/nouislider.min.css' %}">
+  <!-- Style css -->
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+
+  <style>
+
+  </style>
+  {% block style %}
+  {% endblock style %}
+</head>
+
+<body style="background-color: #fff;">
+
+  <!--*******************
+        Preloader start
+    ********************-->
+  <div id="preloader">
+    <div class="waviy">
+      <span style="--i:1">L</span>
+      <span style="--i:2">o</span>
+      <span style="--i:3">a</span>
+      <span style="--i:4">d</span>
+      <span style="--i:5">i</span>
+      <span style="--i:6">n</span>
+      <span style="--i:7">g</span>
+      <span style="--i:8">.</span>
+      <span style="--i:9">.</span>
+      <span style="--i:10">.</span>
+    </div>
+  </div>
+  <!--*******************
+        Preloader end
+    ********************-->
+
+  <!--**********************************
+        Main wrapper start
+    ***********************************-->
+  <div id="main-wrapper">
+
+    <!--**********************************
+            Nav header start
+        ***********************************-->
+    <div class="nav-header">
+      <a href="{% url 'dashboard_view' %}" class="brand-logo">
+        <!-- Replace with a more concise icon -->
+        <img src="{% static 'logo esp.png' %}" width="180" height="80" alt="">
+        <span class="brand-title" style="color: #193B62; font-weight: bold; margin-left: 10px;">
+
+        </span>
+      </a>
+      <div class="nav-control">
+        <div class="hamburger">
+          <span class="line"></span><span class="line"></span><span class="line"></span>
+        </div>
+      </div>
+    </div>
+    <!--**********************************
+            Nav header end
+        ***********************************-->
+
+    <!--**********************************
+            Header start
+        ***********************************-->
+    <div class="header">
+      <div class="header-content">
+        <nav class="navbar navbar-expand">
+          <div class="collapse navbar-collapse justify-content-between">
+            <div class="header-left">
+              <div class="dashboard_bar">
+                Geochemical Analysis Dashboard
+              </div>
+            </div>
+            <ul class="navbar-nav header-right">
+              <li class="nav-item">
+                <div class="input-group search-area">
+                  <input type="text" class="form-control" placeholder="Search here...">
+                  <span class="input-group-text"><a href="javascript:void(0)"><i
+                        class="flaticon-381-search-2"></i></a></span>
+                </div>
+              </li>
+              <li class="nav-item dropdown notification_dropdown">
+                <a class="nav-link" href="javascript:void(0);" data-bs-toggle="dropdown">
+                  <i class="fas fa-bell"></i>
+                  <span class="badge light text-white bg-primary rounded-circle">2</span>
+                </a>
+                <!-- ... (Rest of the notification dropdown code - you can keep this) ... -->
+              </li>
+
+              <li class="nav-item">
+                <a href="{% url 'generate_report_pdf' %}" class="btn btn-primary d-sm-inline-block d-none">Generate
+                  Report<i class="las la-signal ms-3 scale5"></i></a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </div>
+    <!--**********************************
+            Header end ti-comment-alt
+        ***********************************-->
+
+    <!--**********************************
+            Sidebar start
+        ***********************************-->
+    <div class="dlabnav">
+      <div class="dlabnav-scroll">
+        <ul class="metismenu" id="menu">
+          <li class="dropdown header-profile">
+            <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
+              {% if user.profile.image %}
+              <img src="{{ user.profile.image.url }}" width="20" alt="Profile Picture">
+              {% else %}
+              <img src="{% static 'images/default_profile_pic.jpg' %}" width="20" alt="Default Profile Picture">
+              {% endif %}
+              <div class="header-info ms-3">
+                <span class="font-w600 ">Hi,<b>{{ user.username }}</b></span>
+                <small class="text-end font-w400">{{ user.email }}</small>
+              </div>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a href="{% url 'profile' %}" class="dropdown-item ai-icon">
+                <i class="fas fa-user text-primary"></i>
+                <span class="ms-2">Profile </span>
+              </a>
+              <a href="#" onclick="logout()" class="dropdown-item ai-icon">
+                <i class="fas fa-sign-out-alt text-danger"></i>
+                <span class="ms-2">Logout </span>
+              </a>
+            </div>
+          </li>
+          <li><a href="{% url 'dashboard_view' %}" class="ai-icon" aria-expanded="false">
+              <i class="flaticon-025-dashboard"></i>
+              <span class="nav-text">Dashboard</span>
+            </a>
+          </li>
+          <li><a href="{% url 'upload_excel' %}" class="ai-icon" aria-expanded="false">
+              <i class="fas fa-upload"></i>
+              <span class="nav-text">Upload</span>
+            </a>
+          </li>
+          <li><a href="{% url 'register' %}" class="ai-icon" aria-expanded="false">
+              <i class="fas fa-user-plus"></i>
+              <span class="nav-text">Add Admin</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="copyright">
+          <p><strong>ESP</strong> © 2025 All Rights Reserved</p>
+          <p class="fs-12">Made with <span class="heart"></span> by Us</p>
+        </div>
+      </div>
+    </div>
+    <!--**********************************
+            Sidebar end
+        ***********************************-->
+
+    <!--**********************************
+            Content body start
+        ***********************************-->
+    <div class="content-body">
+      <div class="container-fluid">
+        {% block content %}
+        {% endblock %}
+      </div>
+    </div>
+    <!--**********************************
+            Content body end
+        ***********************************-->
+
+    <!--**********************************
+            Footer start
+        ***********************************-->
+    <div class="footer">
+      <div class="copyright">
+
+      </div>
+    </div>
+    <!--**********************************
+            Footer end
+        ***********************************-->
+  </div>
+  <!--**********************************
+        Main wrapper end
+    ***********************************-->
+
+  <!--**********************************
+        Scripts
+    ***********************************-->
+  {% block scripts %}
+  {% endblock %}
+  <!-- Required vendors -->
+  <script src="{% static 'vendor/global/global.min.js' %}"></script>
+  <script src="{% static 'vendor/chart.js/Chart.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/jquery-nice-select/js/jquery.nice-select.min.js' %}"></script>
+
+  <!-- Apex Chart -->
+  <script src="{% static 'vendor/apexchart/apexchart.js' %}"></script>
+  <script src="{% static 'vendor/nouislider/nouislider.min.js' %}"></script>
+  <script src="{% static 'vendor/wnumb/wNumb.js' %}"></script>
+
+  <!-- Dashboard 1 -->
+  <script src="{% static 'js/dashboard/dashboard-1.js' %}"></script>
+
+  <script src="{% static 'js/custom.min.js' %}"></script>
+  <script src="{% static 'js/dlabnav-init.js' %}"></script>
+  <script src="{% static 'js/demo.js' %}"></script>
+  <script src="{% static 'js/styleSwitcher.js' %}"></script>
+  <script>
+    function logout() {
+      // Create a form element
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{% url "logout" %}';
+
+      // Add CSRF token input
+      var csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = '{{ csrf_token }}';
+      form.appendChild(csrfInput);
+
+      // Append the form to the document and submit it
+      document.body.appendChild(form);
+      form.submit();
+    }
+  </script>
+</body>
+
+</html>
