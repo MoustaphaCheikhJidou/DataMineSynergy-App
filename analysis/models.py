@@ -9,6 +9,8 @@ class DrillHole(models.Model):
     hole_id = models.CharField(max_length=50, primary_key=True)
     project = models.CharField(max_length=255, null=True, blank=True)
     prospect = models.CharField(max_length=255, null=True, blank=True)
+    easting = models.FloatField(null=True, blank=True)  # Add easting
+    northing = models.FloatField(null=True, blank=True) # Add northing
 
     class Meta:
         indexes = [
