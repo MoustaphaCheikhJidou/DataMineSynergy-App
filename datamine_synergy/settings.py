@@ -26,9 +26,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'analysis',  # Assurez-vous que cette ligne est présente
-    'users',  # Ajoutez cette ligne
-    "crispy_forms",
-    "crispy_bootstrap4",
+    'users',  # Assurez-vous que cette ligne est présente
+        "crispy_forms", 
+    "crispy_bootstrap4"
 ]
 
 
@@ -71,14 +71,18 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pie',  # Nom exact de la base de données
         'USER': 'root',  # Utilisateur MySQL
-        'PASSWORD': 'Medlemin23014',  # Mot de passe
-        'HOST': '127.0.0.1',  # Serveur local
-        'PORT': '3307',       # Port utilisé
+        'PASSWORD': '',  # Laissez vide si aucun mot de passe
+        'HOST': 'localhost',  # Serveur local
+        'PORT': '3306',       # Port par défaut pour MySQL
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
+
+
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

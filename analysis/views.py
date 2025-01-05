@@ -7,14 +7,6 @@ from django.apps import apps
 import tempfile
 import re
 import logging
-<<<<<<< HEAD
-import os
-from django.db import models
-
-# Import des modèles
-from .models import DrillHole, DrillInterval, ChemicalAnalysis, ElementValue
-
-=======
 import io
 import os
 import tempfile
@@ -83,7 +75,6 @@ from bokeh.models import TabPanel
 import numpy.ma as ma
 
 from django.contrib.auth.decorators import login_required
->>>>>>> front
 # Configure le logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -261,21 +252,6 @@ def process_merged_data(merged_df):
 def process_aura_file(file_path):
     try:
         logger.info("Début du traitement du fichier Excel")
-<<<<<<< HEAD
-        
-        # Charger les feuilles dans des DataFrames
-        logger.info("Lecture des feuilles Excel...")
-        try:
-            df_geology = pd.read_excel(file_path, sheet_name="DHGeology")
-            df_assays = pd.read_excel(file_path, sheet_name="DHAssays")
-            logger.info(f"Feuilles chargées avec succès. Géologie: {len(df_geology)} lignes, Analyses: {len(df_assays)} lignes")
-        except Exception as e:
-            logger.error(f"Erreur lors de la lecture des feuilles Excel: {str(e)}")
-            raise ValueError(f"Erreur lors de la lecture des feuilles Excel. Assurez-vous que les feuilles 'DHGeology' et 'DHAssays' existent. Erreur: {str(e)}")
-
-        # Standardiser les noms de colonnes
-        column_mapping = {
-=======
 
         # Charger les feuilles dans des DataFrames
         logger.info("Lecture des feuilles Excel...")
@@ -290,7 +266,6 @@ def process_aura_file(file_path):
 
         # Standardiser les noms de colonnes pour df_collars
         collars_column_mapping = {
->>>>>>> front
             'HOLEID': 'HoleID',
             'Hole_ID': 'HoleID',
             'holeid': 'HoleID',
@@ -299,22 +274,6 @@ def process_aura_file(file_path):
             'project': 'Project',
             'PROSPECT': 'Prospect',
             'prospect': 'Prospect',
-<<<<<<< HEAD
-            'DEPTHFROM': 'DepthFrom',
-            'Depth_From': 'DepthFrom',
-            'depthfrom': 'DepthFrom',
-            'DEPTH_FROM': 'DepthFrom',
-            'DEPTHTO': 'DepthTo',
-            'Depth_To': 'DepthTo',
-            'depthto': 'DepthTo',
-            'DEPTH_TO': 'DepthTo',
-            'LITHOLOGY1': 'Lithology1',
-            'lithology1': 'Lithology1',
-            'Lithology_1': 'Lithology1'
-        }
-
-        # Appliquer le mapping aux deux DataFrames
-=======
             'EASTING': 'Easting',
             'easting': 'Easting',
             'NORTHING': 'Northing',
@@ -326,32 +285,10 @@ def process_aura_file(file_path):
         column_mapping = {
             # ... (your existing column mapping)
         }
->>>>>>> front
         df_geology = df_geology.rename(columns=column_mapping)
         df_assays = df_assays.rename(columns=column_mapping)
 
         # Vérifier les colonnes requises
-<<<<<<< HEAD
-        required_geology_columns = ['HoleID', 'Project', 'DepthFrom', 'DepthTo', 'Lithology1']
-        required_assays_columns = ['HoleID', 'Project', 'DepthFrom', 'DepthTo']
-
-        # Vérifier si toutes les colonnes requises sont présentes
-        missing_geology = [col for col in required_geology_columns if col not in df_geology.columns]
-        missing_assays = [col for col in required_assays_columns if col not in df_assays.columns]
-
-        if missing_geology or missing_assays:
-            raise ValueError(f"Colonnes manquantes - Géologie: {missing_geology}, Analyses: {missing_assays}")
-
-        # Sélectionner les colonnes nécessaires de la géologie
-        df_geology = df_geology[['Project', 'Prospect', 'HoleID', 'DepthFrom', 'DepthTo', 'Lithology1']]
-
-        # Comparer les colonnes 'HoleID' dans les deux DataFrames
-        comparison = df_geology['HoleID'].isin(df_assays['HoleID'])
-        df_geology = df_geology[comparison]
-
-        # Comparer les HoleID dans df_assays et df_geology
-        comparison_assays = df_assays['HoleID'].isin(df_geology['HoleID'])
-=======
         required_collars_columns = ['HoleID', 'Project', 'Easting', 'Northing']  # Add 'Easting', 'Northing'
         required_geology_columns = ['HoleID', 'Project', 'DepthFrom', 'DepthTo', 'Lithology1']
         required_assays_columns = ['HoleID', 'Project', 'DepthFrom', 'DepthTo']
@@ -374,33 +311,14 @@ def process_aura_file(file_path):
 
         # Comparer les HoleID dans df_assays et df_geology
         comparison_assays = df_assays['HoleID'].isin(df_merged_collars_geology['HoleID'])
->>>>>>> front
         df_assays = df_assays[comparison_assays]
 
         # Suppression des NaN uniquement dans la colonne 'U_ppm'
         if 'U_ppm' in df_assays.columns:
             df_assays = df_assays[df_assays['U_ppm'].notna()]
 
-<<<<<<< HEAD
-        # Liste des colonnes à exclure
-        exclude_columns = ['DepthFrom', 'DepthTo', 'Interval', 'Comments']
-
-        # Identification des colonnes numériques à traiter
-        numeric_columns = df_assays.select_dtypes(include='number').columns
-        columns_to_process = [col for col in numeric_columns if col not in exclude_columns]
-
-        # Remplacement des valeurs négatives par 0 dans les colonnes numériques sélectionnées
-        df_assays[columns_to_process] = df_assays[columns_to_process].clip(lower=0)
-
-        # Remplacement des NaN restants par 0
-        df_assays = df_assays.fillna(0)
-
-        # Créer une colonne ID en combinant HoleID, DepthFrom et DepthTo
-        df_geology['ID'] = df_geology['HoleID'].astype(str) + df_geology['DepthFrom'].astype(str) + df_geology['DepthTo'].astype(str)
-=======
         # Créer une colonne ID en combinant HoleID, DepthFrom et DepthTo
         df_merged_collars_geology['ID'] = df_merged_collars_geology['HoleID'].astype(str) + df_merged_collars_geology['DepthFrom'].astype(str) + df_merged_collars_geology['DepthTo'].astype(str)
->>>>>>> front
         df_assays['ID'] = df_assays['HoleID'].astype(str) + df_assays['DepthFrom'].astype(str) + df_assays['DepthTo'].astype(str)
 
         # Sélectionner les colonnes d'analyses chimiques
@@ -408,31 +326,6 @@ def process_aura_file(file_path):
         df_assays = df_assays[assay_cols]
 
         # Réinitialiser les indices
-<<<<<<< HEAD
-        df_geology = df_geology.reset_index(drop=True)
-        df_assays = df_assays.reset_index(drop=True)
-
-        # Trouver les ID communs
-        common_ids = df_geology['ID'].isin(df_assays['ID'])
-        df_geology_common = df_geology[common_ids]
-
-        common_ids_assays = df_assays['ID'].isin(df_geology_common['ID'])
-        df_assays_common = df_assays[common_ids_assays]
-
-        # Identifier et supprimer les colonnes communes de df_geology_common
-        common_columns = set(df_geology_common.columns).intersection(set(df_assays_common.columns)) - {'ID'}
-        df_geology_common = df_geology_common.drop(columns=common_columns)
-
-        # Effectuer la fusion
-        df_merged = pd.merge(df_assays_common, df_geology_common, on='ID', how='left')
-
-        # Identifier et supprimer les colonnes avec uniquement des zéros
-        cols_to_exclude = []
-        for col in df_merged.columns:
-            if df_merged[col].unique().tolist() == [0]:
-                cols_to_exclude.append(col)
-        df_merged = df_merged.drop(cols_to_exclude, axis=1)
-=======
         df_merged_collars_geology = df_merged_collars_geology.reset_index(drop=True)
         df_assays = df_assays.reset_index(drop=True)
 
@@ -449,7 +342,6 @@ def process_aura_file(file_path):
 
         # Effectuer la fusion
         df_merged = pd.merge(df_assays_common, df_merged_collars_geology_common, on='ID', how='left')
->>>>>>> front
 
         # Convertir toutes les valeurs de Lithology1 en minuscules
         df_merged['Lithology1'] = df_merged['Lithology1'].str.lower()
@@ -464,27 +356,17 @@ def process_aura_file(file_path):
             DrillHole.objects.all().delete()
             
             # Créer les trous de forage (approche modifiée)
-<<<<<<< HEAD
-            unique_holes = df_merged[['HoleID', 'Project', 'Prospect']].drop_duplicates()
-=======
             unique_holes = df_merged[['HoleID', 'Project', 'Prospect', 'Easting', 'Northing']].drop_duplicates()
->>>>>>> front
             logger.info(f"Nombre de trous uniques: {len(unique_holes)}")
             
             for index, row in unique_holes.iterrows():
                 try:
                     DrillHole.objects.create(
-<<<<<<< HEAD
-                        hole_id=str(row.HoleID),  # Utiliser la notation point
-                        project=str(row.Project),
-                        prospect=str(row.Prospect) if pd.notna(row.Prospect) else None
-=======
                         hole_id=str(row.HoleID),
                         project=str(row.Project),
                         prospect=str(row.Prospect) if pd.notna(row.Prospect) else None,
                         easting=float(row.Easting) if pd.notna(row.Easting) else None,  # Handle missing values
                         northing=float(row.Northing) if pd.notna(row.Northing) else None   # Handle missing values
->>>>>>> front
                     )
                 except Exception as e:
                     logger.error(f"Erreur lors de la création du trou {row.HoleID}: {str(e)}")
@@ -511,19 +393,12 @@ def process_aura_file(file_path):
                     for col in df_merged.columns:
                         if any(suffix in col.lower() for suffix in ['_ppm', '_ppb', '_pct']):
                             value = row[col]
-<<<<<<< HEAD
-                            if pd.notna(value) and value != 0:
-                                try:
-                                    element = col.split('_')[0]
-                                    unit = col.split('_')[1]
-=======
                             if pd.notna(value):
                                 try:
                                     element = col.split('_')[0]
                                     unit = col.split('_')[1]
                                     # Ensure the value is non-negative
                                     value = max(0.0, float(value))  # Set negative values to 0
->>>>>>> front
                                     ElementValue.objects.create(
                                         analysis=chemical_analysis,
                                         element=element,
@@ -543,12 +418,8 @@ def process_aura_file(file_path):
         logger.error(f"Erreur lors du traitement du fichier: {str(e)}")
         logger.exception("Détails de l'erreur:")
         return False, str(e)
-<<<<<<< HEAD
-
-=======
     
 @login_required
->>>>>>> front
 def upload_excel(request):
     if request.method == 'POST' and request.FILES.get('file'):
         excel_file = request.FILES['file']
@@ -581,11 +452,6 @@ def upload_excel(request):
             except Exception as e:
                 logger.error(f"Erreur lors de la suppression du fichier temporaire : {str(e)}")
         
-<<<<<<< HEAD
-        return redirect('upload_excel')
-    
-    return render(request, 'upload.html')
-=======
         return redirect('upload_excel')  # Redirect even if there's an error
 
     return render(request, 'upload.html')
@@ -1454,4 +1320,3 @@ def dashboard_view(request):
         'status_message': status_message,
     }
     return render(request, 'dashboard.html', context)
->>>>>>> front
