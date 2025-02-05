@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - DataMine Synergy{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .nav-header .brand-logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .custom-logo {
+        max-height: 40px;
+        transition: all 0.3s;
+    }
+
+    .stat-widget-one {
+        background: var(--gradient-1);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .stat-widget-one:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 30px rgba(0,0,0,0.15);
+    }
+
+    .stat-widget-one.primary { background: linear-gradient(45deg, #257280, #2E88A0); }
+    .stat-widget-one.success { background: linear-gradient(45deg, #2E8B57, #3CB371); }
+    .stat-widget-one.warning { background: linear-gradient(45deg, #FFA500, #FFD700); }
+    .stat-widget-one.danger { background: linear-gradient(45deg, #DC3545, #FF6B6B); }
+
+    .stat-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1rem;
+        font-size: 1.5rem;
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-text h3 {
+        margin: 0;
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: white;
+    }
+
+    .stat-text span {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        height: 100%;
+        min-height: 400px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+
+    .chart-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .chart-header i {
+        font-size: 1.25rem;
+        color: #257280;
+        margin-right: 0.75rem;
+    }
+
+    .chart-header h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2E2E2E;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 1.5rem;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        .stat-text h3 {
+            font-size: 1.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+        <div class="stats-grid">
+            <div class="card fade-in-up" style="animation-delay: 0.1s">
+                <div class="stat-widget-one primary">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="stat-text">
+                            <h3>{{ total_drill_holes }}</h3>
+                            <span>Total Forages</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in-up" style="animation-delay: 0.2s">
+                <div class="stat-widget-one success">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-atom"></i>
+                        </div>
+                        <div class="stat-text">
+                            <h3>{{ average_uranium }}</h3>
+                            <span>Moyenne Uranium (ppm)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in-up" style="animation-delay: 0.3s">
+                <div class="stat-widget-one warning">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-mountain"></i>
+                        </div>
+                        <div class="stat-text">
+                            <h3>{{ granite_intervals }}</h3>
+                            <span>Intervalles Granite</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in-up" style="animation-delay: 0.4s">
+                <div class="stat-widget-one danger">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fas fa-arrow-trend-up"></i>
+                        </div>
+                        <div class="stat-text">
+                            <h3>{{ max_uranium }}</h3>
+                            <span>Max Uranium (ppm)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="card fade-in-up" style="animation-delay: 0.5s">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <i class="fas fa-chart-bar"></i>
+                        <h4>Distribution des Lithologies</h4>
+                    </div>
+                    <canvas id="lithologyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card fade-in-up" style="animation-delay: 0.6s">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Concentration d'Uranium par Profondeur</h4>
+                    </div>
+                    <canvas id="uraniumDepthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Transaction Overview Section -->
+        <div class="row mt-4">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header d-flex flex-wrap border-0 pb-0">
+                        <div class="me-auto mb-sm-0 mb-3">
+                            <h4 class="card-title mb-2">Aperçu des Forages</h4>
+                            <span class="fs-12">Dernières analyses et mises à jour</span>
+                        </div>
+                        <a href="javascript:void(0)" class="btn btn-rounded btn-md btn-primary me-3">
+                            <i class="las la-download scale5 me-3"></i>Télécharger Rapport
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-responsive-md card-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Forage</th>
+                                        <th>Date</th>
+                                        <th>Profondeur (m)</th>
+                                        <th>Uranium (ppm)</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for drill in recent_drills %}
+                                    <tr>
+                                        <td>{{ drill.id }}</td>
+                                        <td>{{ drill.date }}</td>
+                                        <td>{{ drill.depth }}</td>
+                                        <td>{{ drill.uranium_concentration }}</td>
+                                        <td>
+                                            <span class="badge badge-{{ drill.status_class }}">
+                                                {{ drill.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartConfig = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        family: "'Poppins', sans-serif"
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                padding: 12,
+                bodyFont: {
+                    family: "'Poppins', sans-serif"
+                }
+            }
+        },
+        animation: {
+            duration: 2000,
+            easing: 'easeInOutQuart'
+        }
+    };
+
+    // Lithology Distribution Chart
+    new Chart(document.getElementById('lithologyChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ lithology_labels|safe }},
+            datasets: [{
+                label: 'Nombre d\'intervalles',
+                data: {{ lithology_counts|safe }},
+                backgroundColor: '#257280',
+                borderColor: '#1e5c66',
+                borderWidth: 1,
+                borderRadius: 8,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            ...chartConfig,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false,
+                        borderDash: [5, 5]
+                    }
+                }
+            }
+        }
+    });
+
+    // Uranium Depth Chart
+    new Chart(document.getElementById('uraniumDepthChart'), {
+        type: 'line',
+        data: {
+            labels: {{ uranium_depth_labels|safe }},
+            datasets: [{
+                label: 'Uranium (ppm)',
+                data: {{ uranium_depth_data|safe }},
+                fill: true,
+                backgroundColor: 'rgba(37, 114, 128, 0.1)',
+                borderColor: '#257280',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#257280'
+            }]
+        },
+        options: {
+            ...chartConfig,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false,
+                        borderDash: [5, 5]
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

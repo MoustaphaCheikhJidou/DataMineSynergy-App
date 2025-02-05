@@ -352,16 +352,20 @@ def process_aura_file(file_path):
 
         # Sauvegarder les données dans la base de données
         with transaction.atomic():
-            # Supprimer les anciennes données
+            # Supprimer les anciennes données from the tables
             DrillHole.objects.all().delete()
+            DrillInterval.objects.all().delete()
+            ChemicalAnalysis.objects.all().delete()
+            ElementValue.objects.all().delete()
+            logger.info("Anciennes données supprimées")
             
-            # Créer les trous de forage (approche modifiée)
+            # Create DrillHoles
             unique_holes = df_merged[['HoleID', 'Project', 'Prospect', 'Easting', 'Northing']].drop_duplicates()
             logger.info(f"Nombre de trous uniques: {len(unique_holes)}")
             
             for index, row in unique_holes.iterrows():
-                try:
-                    DrillHole.objects.create(
+                try: 
+                   DrillHole.objects.create(
                         hole_id=str(row.HoleID),
                         project=str(row.Project),
                         prospect=str(row.Prospect) if pd.notna(row.Prospect) else None,
@@ -371,8 +375,7 @@ def process_aura_file(file_path):
                 except Exception as e:
                     logger.error(f"Erreur lors de la création du trou {row.HoleID}: {str(e)}")
                     raise
-
-            # Créer les intervalles et analyses chimiques
+            # Create DrillIntervals
             for index, row in df_merged.iterrows():
                 try:
                     drill_hole = DrillHole.objects.get(hole_id=str(row.HoleID))
@@ -383,13 +386,12 @@ def process_aura_file(file_path):
                         depth_to=float(row.DepthTo),
                         lithology=str(row.Lithology1)
                     )
-
-                    # Créer l'analyse chimique
+                    # Create ChemicalAnalysis
                     chemical_analysis = ChemicalAnalysis.objects.create(
                         interval=interval
                     )
 
-                    # Ajouter les valeurs des éléments
+                    # Add ElementValue for Chemical Analysis
                     for col in df_merged.columns:
                         if any(suffix in col.lower() for suffix in ['_ppm', '_ppb', '_pct']):
                             value = row[col]
@@ -398,7 +400,7 @@ def process_aura_file(file_path):
                                     element = col.split('_')[0]
                                     unit = col.split('_')[1]
                                     # Ensure the value is non-negative
-                                    value = max(0.0, float(value))  # Set negative values to 0
+                                    value = max(0.0, float(value))
                                     ElementValue.objects.create(
                                         analysis=chemical_analysis,
                                         element=element,
@@ -521,8 +523,6 @@ def generate_report_pdf(request):
     uranium_depth_plot = plot_uranium_by_depth(df)
     correlation_plot = plot_element_correlations(df_granite, element='U')
     lithology_distribution_plot = plot_lithology_uranium_distribution(df)
-    major_elements_plot = plot_major_elements_vs_si02(df_granite)
-    trace_elements_plot = plot_trace_elements_vs_si02(df_granite)
     scatter_plot_panel = create_scatter_plot_panel(df_granite, available_elements_scatter)
     stats_table = display_uranium_statistics_table(df)
     geochemical_table = plot_geochemical_data_table(df)
@@ -534,8 +534,6 @@ def generate_report_pdf(request):
         file_html(uranium_depth_plot, CDN, "Uranium by Depth"),
         file_html(correlation_plot, CDN, "Element Correlations"),
         file_html(lithology_distribution_plot, CDN, "Uranium Distribution by Lithology"),
-        file_html(major_elements_plot, CDN, "Major Elements vs SiO2"),
-        file_html(trace_elements_plot, CDN, "Trace Elements vs SiO2"),
         file_html(scatter_plot_panel, CDN, "Scatter Plot Panel"),
         file_html(stats_table, CDN, "Uranium Statistics Table"),
         file_html(geochemical_table, CDN, "Geochemical Data Table"),
@@ -783,95 +781,79 @@ def plot_lithology_uranium_distribution(df):
 
     return p
 
-def plot_major_elements_vs_si02(df):
+def plot_lithology_counts(df):
     """
-    Grid of major elements vs. SIO2, each in a separate small figure.
-    Expect columns: SIO2, Al2O3, CaO, FEO, MgO, Na2O, K2O, TiO2
-    """
-    # Print available columns for debugging
-    print("Available columns:", df.columns.tolist())
-    print("Number of rows:", len(df))
-    
-    if df.empty:
-        return Div(text="DataFrame is empty")
-    
-    if 'SIO2' not in df.columns:
-        return Div(text="SIO2 column not found. Available columns: " + ", ".join(df.columns))
+    Creates a bar plot showing the count of each lithology.
 
-    # Define expected column names and their alternates
-    major_elements = {
-        'AL2O3': ['AL2O3', 'Al2O3', 'al2o3'],
-        'CAO': ['CAO', 'CaO', 'cao'],
-        'FEO': ['FEO', 'FeO', 'feo'],
-        'MGO': ['MGO', 'MgO', 'mgo'],
-        'NA2O': ['NA2O', 'Na2O', 'na2o'],
-        'K2O': ['K2O', 'k2o'],
-        'TIO2': ['TIO2', 'TiO2', 'tio2']
-    }
-    
+    Args:
+        df: The DataFrame containing the data.
+
+    Returns:
+        A Bokeh plot object.
+    """
+    if df.empty or 'lithology' not in df.columns:
+        return Div(text="<p>No data available for Lithology Counts plot.</p>")
+
+    # Count the occurrences of each lithology
+    lithology_counts = df['lithology'].value_counts()
+
+    source = ColumnDataSource(data={
+        'lithology': lithology_counts.index.tolist(),
+        'counts': lithology_counts.values
+    })
+
+    p = figure(x_range=lithology_counts.index.tolist(), width=800, height=400,
+               title="Count of Samples by Lithology",
+               tools="pan,box_zoom,reset,hover,save")
+
+    p.vbar(x='lithology', top='counts', width=0.9, source=source,
+           line_color="white", fill_color=factor_cmap('lithology', palette=Category20[len(lithology_counts)], factors=lithology_counts.index.tolist()))
+
+    p.xaxis.axis_label = "Lithology"
+    p.yaxis.axis_label = "Count"
+    p.xgrid.grid_line_color = None
+    p.y_range.start = 0
+
+    hover = HoverTool(tooltips=[("Lithology", "@lithology"), ("Count", "@counts")])
+    p.add_tools(hover)
+
+    return p
+
+def plot_histogram_selected_elements(df, elements):
+    """
+    Creates histograms for a selection of elements.
+
+    Args:
+        df: DataFrame containing the geochemical data.
+        elements: List of element column names to plot.
+
+    Returns:
+        A Bokeh layout object containing the histograms.
+    """
     plots = []
-    
-    for elem_key, elem_variants in major_elements.items():
-        # Find the first matching column name variant
-        matching_col = next((col for col in elem_variants if col in df.columns), None)
-        
-        if matching_col:
-            # Print data range for debugging
-            print(f"{matching_col} range:", df[matching_col].min(), "to", df[matching_col].max())
-            
-            p = figure(width=350, height=300,
-                      title=f"{elem_key} vs SiO2",
-                      x_axis_label="SiO2 (%)",
-                      y_axis_label=f"{elem_key} (%)",
-                      tools="pan,box_zoom,reset,hover,save")
-            
-            source = ColumnDataSource(df)
-            p.scatter(x='SIO2', y=matching_col, source=source, 
-                    size=6, color="blue", alpha=0.6)
-            
-            p.hover.tooltips = [(elem_key, f"@{matching_col}"), ("SiO2", "@SIO2")]
-            plots.append(p)
-        else:
-            print(f"No matching column found for {elem_key}")
-
-    if not plots:
-        return Div(text="No valid major element columns found for plotting")
-
-    # Arrange plots in rows of 2
-    rows = []
-    for i in range(0, len(plots), 2):
-        row_plots = plots[i:i+2]
-        rows.append(row(*row_plots))
-    
-
-    return column(*rows)
-
-
-
-def plot_trace_elements_vs_si02(df):
-    """
-    Similar approach but for trace elements. Expect columns [Ba, Nb, Rb, Sr, Zn, Zr] etc.
-    """
-    if df.empty or 'SIO2' not in df.columns:
-        return Div(text="No data for Trace Elements vs SiO2 plot (SIO2 missing).")
-
-    trace_elements = ['BA', 'NB', 'RB', 'SR', 'ZN', 'ZR']
-    plots = []
-    for elem in trace_elements:
+    for elem in elements:
         if elem in df.columns:
-            p = figure(width=350, height=300,
-                       title=f"{elem} vs SiO2",
-                       x_axis_label="SiO2 (%)",
-                       y_axis_label=f"{elem} (ppm)",
-                       tools="pan,box_zoom,reset,hover,save")
-            p.scatter(x='SIO2', y=elem, source=ColumnDataSource(df), size=6, color="green", alpha=0.5)
-            p.hover.tooltips = [(f"{elem}", f"@{elem}"), ("SiO2", "@SIO2")]
-            plots.append(p)
+            df[elem] = pd.to_numeric(df[elem], errors='coerce')
+            df_filtered = df.dropna(subset=[elem])
+            
+            if not df_filtered.empty:
+                hist, edges = np.histogram(df_filtered[elem], density=True, bins=50)
 
-    rowed = []
-    for i in range(0, len(plots), 2):
-        rowed.append(row(*plots[i:i+2]))
-    return column(*rowed)
+                p = figure(title=f"Distribution of {elem}", x_axis_label=elem, y_axis_label="Density",
+                           tools="pan,box_zoom,reset,save")
+                p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                       fill_color="skyblue", line_color="white", alpha=0.8)
+
+                hover = HoverTool(tooltips=[(elem, "@"+elem+"{0.00}")])
+                p.add_tools(hover)
+
+                plots.append(p)
+            else:
+                print(f"Skipping {elem} due to no valid data.")
+        else:
+            print(f"Column {elem} not found in DataFrame.")
+
+    return column(*plots)
 
 def create_scatter_plot_panel(df, available_elements):
     """
@@ -1047,6 +1029,236 @@ def create_uranium_distribution_tab(df):
     return TabPanel(child=dist_plot, title="U Distribution")
 
 
+from bokeh.palettes import Viridis256  # Or any other suitable palette
+from bokeh.models import LabelSet, Text
+def plot_correlation_matrix(df, element, elements_list, plot_width=600, plot_height=600):
+    """
+    Generates a correlation matrix heatmap for a given element against a list of elements using Bokeh.
+
+    Args:
+        df: The DataFrame containing the geochemical data.
+        element: The element to compare against (e.g., 'U' for Uranium).
+        elements_list: A list of elements to include in the correlation matrix.
+        plot_width: Width of the plot.
+        plot_height: Height of the plot.
+
+    Returns:
+        A Bokeh plot object.
+    """
+    # Ensure the element is in the list for correlation calculation
+    if element not in elements_list:
+        elements_list.insert(0, element)
+
+    # Select only the relevant columns and ensure they are numeric
+    df_selected = df[elements_list]
+    df_numeric = df_selected.apply(pd.to_numeric, errors='coerce')
+
+    # Drop rows with NaN values
+    df_numeric.dropna(inplace=True)
+
+    # Check if DataFrame is empty after cleanup
+    if df_numeric.empty:
+        return Div(text="<p>No data available for correlation matrix after data cleanup.</p>")
+
+    # Calculate the correlation matrix
+    corr_matrix = df_numeric.corr()
+
+    # Prepare data for plotting
+    elements = corr_matrix.columns.tolist()
+    num_elements = len(elements)
+
+    x = []
+    y = []
+    colors = []
+    correlations = []
+
+    for i in range(num_elements):
+        for j in range(num_elements):
+            x.append(elements[i])
+            y.append(elements[j])
+            correlation_value = corr_matrix.iloc[i, j]
+            correlations.append(correlation_value)
+            # Using the Viridis256 palette for color mapping
+            color_value = int(255 * (correlation_value + 1) / 2)  # Scale to 0-255
+            colors.append(Viridis256[min(max(color_value, 0), 255)])  # Ensure value is in the palette's range
+
+    source = ColumnDataSource(data=dict(x=x, y=y, colors=colors, correlations=correlations))
+
+    # Create the figure
+    p = figure(
+        title=f"Correlation Matrix: {element} vs. Other Elements",
+        x_range=elements,
+        y_range=list(reversed(elements)),
+        x_axis_location="above",
+        width=plot_width,
+        height=plot_height,
+        tools="hover,pan,box_zoom,reset,save",
+        toolbar_location='below',
+        tooltips=[('Element 1', '@x'), ('Element 2', '@y'), ('Correlation', '@correlations{0.00}')],
+    )
+
+    # Add the heatmap
+    p.rect(
+        x='x',
+        y='y',
+        width=1,
+        height=1,
+        source=source,
+        fill_color='colors',
+        line_color=None,
+    )
+
+    # Add a color bar
+    color_mapper = LinearColorMapper(palette=Viridis256, low=-1, high=1)
+    color_bar = ColorBar(
+        color_mapper=color_mapper,
+        ticker=BasicTicker(),
+        label_standoff=8,
+        border_line_color=None,
+        location=(0, 0),
+        orientation='horizontal',
+        padding=5,  # Reduced padding
+        major_label_text_font_size="10px"  # Smaller font size for labels
+    )
+    p.add_layout(color_bar, 'below')
+
+    # Rotate x-axis labels for better readability
+    p.xaxis.major_label_orientation = 3.14 / 4  # Rotate by 45 degrees
+
+    # Customize the appearance
+    p.grid.grid_line_color = None
+    p.axis.axis_line_color = None
+    p.axis.major_tick_line_color = None
+    p.axis.major_label_text_font_size = "10px"  # Smaller font size for axis labels
+    p.axis.major_label_standoff = 0
+    p.xaxis.major_label_text_font_style = "bold"
+
+    # Add correlation values as text on each cell
+    text_source = ColumnDataSource(data=dict(x=x, y=y, correlations=[f"{c:.2f}" for c in correlations]))
+    text_labels = LabelSet(x='x', y='y', text='correlations', text_align='center', text_baseline='middle',
+                           text_font_size="8pt", source=text_source, text_color="black")
+    p.add_layout(text_labels)
+
+    return p
+
+from bokeh.transform import dodge, factor_cmap
+import pandas as pd
+import numpy as np
+from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.layouts import column
+from bokeh.palettes import Category10, Category20
+from bokeh.transform import factor_cmap
+from bokeh.embed import components
+
+def plot_uranium_by_lithology(df):
+    """
+    Creates a refined box plot and scatter plot of Uranium concentration by lithology.
+    
+    Args:
+        df: DataFrame with columns 'lithology' and 'U' (Uranium concentration in ppm)
+    Returns:
+        Bokeh figure object
+    """
+    # Data preparation
+    df['U'] = pd.to_numeric(df['U'], errors='coerce')
+    df_filtered = df.dropna(subset=['U', 'lithology'])
+    
+    # Calculate statistics for box plots
+    stats = df_filtered.groupby('lithology')['U'].agg(['mean', 'std', 'min', 'max'])
+    stats['q1'] = df_filtered.groupby('lithology')['U'].quantile(0.25)
+    stats['q2'] = df_filtered.groupby('lithology')['U'].quantile(0.5)
+    stats['q3'] = df_filtered.groupby('lithology')['U'].quantile(0.75)
+    
+    # Refined color palette to match the image
+    colors = {
+        'alluvium': '#1f77b4',
+        'calcrete': '#ff7f0e',
+        'calsilicate': '#2ca02c',
+        'colluvium': '#d62728',
+        'granite': '#9467bd',
+        'gravels': '#8c564b',
+        'mafic rock': '#e377c2',
+        'sand': '#7f7f7f',
+        'sandstone': '#bcbd22',
+        'saprolite': '#17becf',
+        'sediment': '#ff9896',
+        'syenite': '#c5b0d5'
+    }
+    
+    # Create figure with refined settings
+    p = figure(width=900, height=600,
+              x_range=sorted(df_filtered['lithology'].unique()),
+              y_range=(0, 1000),
+              toolbar_location="above",
+              tools="pan,box_zoom,wheel_zoom,reset,save")
+    
+    # Create ColumnDataSource for box plots with adjusted coordinates
+    stats['x0'] = [x - 0.2 for x in range(len(stats))]
+    stats['x1'] = [x + 0.2 for x in range(len(stats))]
+    source_stats = ColumnDataSource(stats.reset_index())
+    
+    # Add thinner box plots
+    p.vbar(x='lithology', top='q3', bottom='q1', width=0.3,
+           source=source_stats,
+           fill_color=factor_cmap('lithology', palette=list(colors.values()), 
+                                factors=sorted(df_filtered['lithology'].unique())),
+           line_color="black",
+           alpha=0.5)
+    
+    # Add whiskers with refined styling
+    p.segment(x0='lithology', x1='lithology', y0='q3', y1='max',
+             source=source_stats, line_color="black", line_width=1)
+    p.segment(x0='lithology', x1='lithology', y0='q1', y1='min',
+             source=source_stats, line_color="black", line_width=1)
+    
+    # Add median lines with refined styling
+    p.segment(x0='x0', x1='x1', y0='q2', y1='q2',
+             source=source_stats, line_color="black", line_width=1.5)
+    
+    # Add scatter points with refined jittering
+    for i, lithology in enumerate(sorted(df_filtered['lithology'].unique())):
+        lithology_data = df_filtered[df_filtered['lithology'] == lithology]
+        
+        # Add jitter to x-coordinates to avoid overlapping points
+        jitter = np.random.normal(0, 0.1, size=len(lithology_data))  # Small jitter
+        x_coords = [i + j for j in jitter]  # Center around the lithology index
+        
+        p.circle(x=x_coords,
+                y=lithology_data['U'],
+                size=5,  # Adjust point size
+                fill_color=colors.get(lithology, colors['granite']),
+                fill_alpha=0.6,
+                line_color=None)
+    
+    # Refined styling
+    p.xgrid.grid_line_color = None
+    p.ygrid.grid_line_color = '#e5e5e5'
+    p.ygrid.grid_line_dash = [6, 4]
+    p.ygrid.grid_line_alpha = 0.3
+    
+    # Axis styling
+    p.xaxis.axis_label = "Lithology"
+    p.yaxis.axis_label = "Uranium (ppm)"
+    p.xaxis.axis_label_text_font_size = "12pt"
+    p.yaxis.axis_label_text_font_size = "12pt"
+    p.xaxis.major_label_text_font_size = "10pt"
+    p.yaxis.major_label_text_font_size = "10pt"
+    p.xaxis.major_label_orientation = 0.3
+    
+    # Remove toolbar logo and add minimal padding
+    p.toolbar.logo = None
+    p.min_border_left = 50
+    p.min_border_right = 50
+    
+    # Add hover tool with refined tooltips
+    hover = HoverTool(tooltips=[
+        ("Lithology", "@lithology"),
+        ("Uranium", "@y{0.0} ppm")
+    ])
+    p.add_tools(hover)
+    
+    return p
 
 def create_geochemical_map(df):
     """
@@ -1273,13 +1485,7 @@ def dashboard_view(request):
     major_nonzero = df_granite[['SIO2', 'AL2O3', 'CAO', 'FEO', 'MGO', 'NA2O', 'K2O', 'TIO2']].any().any()
     print("\nAre there any non-zero values in major elements?", major_nonzero)
         # (d) Major elements vs. SiO2 (granite subset or entire df if you prefer)
-    tab_major_elements = TabPanel(child=plot_major_elements_vs_si02(df_granite), 
-                                  title="Major vs SiO2")
-
-    # (e) Trace elements vs. SiO2
-    tab_trace_elements = TabPanel(child=plot_trace_elements_vs_si02(df_granite), 
-                                  title="Trace vs SiO2")
-
+    
     # (f) Scatter plot with dropdown
     available_elements = ['U', 'TH', 'V', 'SIO2', 'FEO', 'AL2O3', 'CAO', 'MGO',
                           'K2O', 'NA2O', 'TIO2', 'BA', 'NB', 'RB', 'SR', 'ZN', 'ZR']
@@ -1302,8 +1508,6 @@ def dashboard_view(request):
         tab_uranium_depth,
         tab_correlation,
         tab_lithology_distribution,
-        tab_major_elements,
-        tab_trace_elements,
         scatter_plot_panel,
         stats_table_tab,
         geochemical_table_tab,
@@ -1320,3 +1524,568 @@ def dashboard_view(request):
         'status_message': status_message,
     }
     return render(request, 'dashboard.html', context)
+
+import pandas as pd
+import numpy as np
+import tempfile, os, traceback
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from bokeh.embed import components
+from bokeh.models import Tabs, Div
+from .forms import UploadFileForm
+from .models import DrillInterval
+
+
+@login_required
+def bokeh_charts_page(request, page_id):
+    # --- Handle file upload if POST (if applicable) ---
+    status_message = ""
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['file']
+            try:
+                temp_dir = tempfile.mkdtemp()
+                temp_file_path = os.path.join(temp_dir, file.name)
+                with open(temp_file_path, 'wb+') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+                # process_aura_file is assumed defined somewhere
+                success, message = process_aura_file(temp_file_path)
+                if success:
+                    status_message = "File uploaded and processed successfully."
+                else:
+                    status_message = f"Error processing file: {message}"
+            except Exception as e:
+                status_message = f"An error occurred: {str(e)}"
+                traceback.print_exc()
+            finally:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                if os.path.exists(temp_dir):
+                    os.rmdir(temp_dir)
+        else:
+            status_message = "Form is not valid. Please upload a valid XLSX file."
+    else:
+        form = UploadFileForm()
+
+    # --- Build DataFrame from the database ---
+    intervals = DrillInterval.objects.select_related('drill_hole')\
+                    .prefetch_related('chemical_analyses__element_values').all()
+    data_rows = []
+    for interval in intervals:
+        hole = interval.drill_hole
+        avg_depth = (interval.depth_from + interval.depth_to) / 2.0
+        for analysis in interval.chemical_analyses.all():
+            element_map = {ev.element.upper(): ev.value for ev in analysis.element_values.all()}
+            row_dict = {
+                'hole_id': hole.hole_id,
+                'depth': avg_depth,
+                'lithology': interval.lithology.lower() if interval.lithology else "unknown",
+                'Longitude': hole.easting,  # adjust if necessary
+                'Latitude': hole.northing,   # adjust if necessary
+                'U': element_map.get('U', 0),
+                'TH': element_map.get('TH', 0),
+                'V': element_map.get('V', 0),
+                'SIO2': element_map.get('SIO2', 0),
+                'FEO': element_map.get('FEO', 0) or element_map.get('FE2O3', 0),
+                'AL2O3': element_map.get('AL2O3', 0),
+                'CAO': element_map.get('CAO', 0),
+                'MGO': element_map.get('MGO', 0),
+                'K2O': element_map.get('K2O', 0),
+                'NA2O': element_map.get('NA2O', 0),
+                'TIO2': element_map.get('TIO2', 0),
+                'BA': element_map.get('BA', 0),
+                'NB': element_map.get('NB', 0),
+                'RB': element_map.get('RB', 0),
+                'SR': element_map.get('SR', 0),
+                'ZN': element_map.get('ZN', 0),
+                'ZR': element_map.get('ZR', 0),
+            }
+            data_rows.append(row_dict)
+    df = pd.DataFrame(data_rows)
+    major_elements = {
+        'AL2O3': ['AL2O3', 'Al2O3', 'al2o3'],
+        'CAO': ['CAO', 'CaO', 'cao'],
+        'FEO': ['FEO', 'FeO', 'feo'],
+        'MGO': ['MGO', 'MgO', 'mgo'],
+        'NA2O': ['NA2O', 'Na2O', 'na2o'],
+        'K2O': ['K2O', 'k2o'],
+        'TIO2': ['TIO2', 'TiO2', 'tio2']
+    }
+    trace_elements = ['BA', 'NB', 'RB', 'SR', 'ZN', 'ZR']
+     # --- Select charts based on page_id ---
+    if page_id == "1":
+        chart1 = plot_uranium_by_depth(df)
+        chart2 = plot_element_correlations(df, element='U')
+        page_title = "Uranium vs Depth and Element Correlations"
+
+        script1, div1 = components(chart1)
+        script2, div2 = components(chart2)
+        context = {
+            'page_title': page_title,
+            'script1': script1,
+            'div1': div1,
+            'script2': script2,
+            'div2': div2,
+            'chart1_title' : chart1.title.text,
+            'chart2_title' : chart2.title.text
+        }
+        
+    elif page_id == "2":
+        df_filtered = df.copy()
+        df_filtered['U'] = pd.to_numeric(df_filtered['U'], errors='coerce')
+        df_filtered.dropna(subset=['U'], inplace=True)
+        chart1 = plot_lithology_uranium_distribution(df)
+        chart2 = plot_uranium_by_lithology(df.copy())  # Use the new function
+        page_title = "Lithology Distribution and Count"
+       
+        script1, div1 = components(chart1)
+        script2, div2 = components(chart2)
+        context = {
+            'page_title': page_title,
+             'script1': script1,
+            'div1': div1,
+            'script2': script2,
+            'div2': div2,
+            'chart1_title' : chart1.title.text,
+            'chart2_title' : "Lithology Counts"
+        }
+
+    elif page_id == "3":
+      trace_elements_list = ['BA', 'NB', 'RB', 'SR', 'ZN', 'ZR']
+      chart1 = plot_correlation_matrix(df.copy(), 'U', trace_elements_list)
+      chart2 = plot_uranium_distribution(df)
+      page_title = "Trace Elements vs SiO₂ and Uranium Distribution"
+
+      script1, div1 = components(chart1)
+      script2, div2 = components(chart2)
+      context = {
+          'page_title': page_title,
+           'script1': script1,
+          'div1': div1,
+          'script2': script2,
+          'div2': div2,
+            'chart1_title' :  "Trace Element Distributions",
+            'chart2_title' : chart2.title.text
+      }
+    elif page_id == "4":
+        # For page 4, we want to use all element columns (i.e. all numeric columns except metadata)
+        # Adjust the exclusion list as needed.
+        exclude_columns = {'hole_id', 'depth', 'lithology', 'Longitude', 'Latitude'}
+        available_elements = [col for col in df.select_dtypes(include=[np.number]).columns if col not in exclude_columns]
+        # Now pass the complete available_elements list to the scatter plot panel
+        panel1 = create_scatter_plot_panel(df, available_elements=available_elements)
+        panel2 = create_statistics_table_tab(df)
+        page_title = "Scatter Plot and Uranium Statistics"
+        
+        from bokeh.models import Tabs
+        charts_tabs = Tabs(tabs=[panel1, panel2])
+        script, div = components(charts_tabs)
+        context = {
+            'page_title': page_title,
+            'script': script,
+            'div': div,
+        }
+    
+    elif page_id == "5":
+        # Correlation matrix for Uranium vs. major elements
+        trace_elements_list = ['BA', 'NB', 'RB', 'SR', 'ZN', 'ZR']
+        correlation_plot_major = plot_correlation_matrix(df.copy(), 'U', trace_elements_list)
+
+        # Correlation matrix for Uranium vs. trace elements
+        trace_elements_list = ['BA', 'NB', 'RB', 'SR', 'ZN', 'ZR']
+        correlation_plot_trace = plot_correlation_matrix(df.copy(), 'U', trace_elements_list)
+
+        # Handle potential Div return for empty plots
+        if isinstance(correlation_plot_major, Div):
+            script_major, div_major = "", correlation_plot_major
+        else:
+            script_major, div_major = components(correlation_plot_major)
+
+        if isinstance(correlation_plot_trace, Div):
+            script_trace, div_trace = "", correlation_plot_trace
+        else:
+            script_trace, div_trace = components(correlation_plot_trace)
+
+        # Update context
+        context = {
+            'script1': script_major,
+            'div1': div_major,
+            'chart1_title': "Correlation Matrix: Uranium vs. Major Elements",
+            'script2': script_trace,
+            'div2': div_trace,
+            'chart4_title': "Correlation Matrix: Uranium vs. Trace Elements",
+        }
+    else:
+         chart1 = plot_uranium_by_depth(df)
+         chart2 = plot_element_correlations(df, element='U')
+         page_title = "Default Charts"
+    
+         script1, div1 = components(chart1)
+         script2, div2 = components(chart2)
+         context = {
+                'page_title': page_title,
+                'script1': script1,
+                'div1': div1,
+                'script2': script2,
+                'div2': div2,
+                'chart1_title' : chart1.title.text,
+                'chart2_title' : chart2.title.text
+         }
+
+    return render(request, 'bokeh_charts_page.html', context)
+
+
+
+def loq(request):
+    return render(request, 'base.html')
+from django.shortcuts import render
+from .models import DrillHole, DrillInterval, ElementValue
+import pandas as pd
+from bokeh.plotting import figure
+from bokeh.models import (
+    ColumnDataSource,
+    HoverTool,
+    CategoricalColorMapper,
+    WMTSTileSource,
+    CustomJS
+)
+from bokeh.palettes import Category10, Category20, d3, Viridis256
+from bokeh.transform import factor_cmap, linear_cmap
+from bokeh.embed import components
+from bokeh.resources import CDN
+from pyproj import Transformer
+import plotly.graph_objects as go
+from django.db.models import Max, Avg, Count
+from django.http import JsonResponse
+import json
+
+
+def map_view(request):
+    # 1. Data: fetch all holes
+    drill_holes = DrillHole.objects.all()
+    data = {
+        'hole_id':   [h.hole_id  for h in drill_holes],
+        'easting':   [h.easting  for h in drill_holes],
+        'northing':  [h.northing for h in drill_holes],
+    }
+    df = pd.DataFrame(data)
+
+    # 2. Convert from EPSG:32629 -> WebMercator
+    transformer = Transformer.from_crs("EPSG:32629", "EPSG:3857", always_xy=True)
+    merc_x, merc_y = transformer.transform(df['easting'].values, df['northing'].values)
+    df['mercator_x'] = merc_x
+    df['mercator_y'] = merc_y
+
+    # 3. Bokeh data source
+    source_2d = ColumnDataSource(df)
+
+    # 4. Bokeh figure
+    p = figure(
+        x_axis_type="mercator",
+        y_axis_type="mercator",
+        x_range=(df['mercator_x'].min(), df['mercator_x'].max()),
+        y_range=(df['mercator_y'].min(), df['mercator_y'].max()),
+        sizing_mode="stretch_width", 
+        title="Drill Hole Locations",
+        tools="pan,wheel_zoom,box_zoom,reset,tap"
+    )
+    tile_provider = WMTSTileSource(
+        url="https://a.basemaps.cartocdn.com/rastertiles/light_all/{Z}/{X}/{Y}.png"
+    )
+    p.add_tile(tile_provider)
+
+    # 5. Plot hole circles
+    p.circle(
+        x='mercator_x',
+        y='mercator_y',
+        source=source_2d,
+        size=10,
+        color='blue',
+        alpha=0.8
+    )
+
+    # 6. Hover
+    hover = HoverTool(tooltips=[
+        ("Hole ID", "@hole_id"),
+        ("Easting", "@easting{0.00}"),
+        ("Northing", "@northing{0.00}"),
+    ])
+    p.add_tools(hover)
+
+    # 7. On tap, fetch two endpoints:
+    #    /get_drill_hole_data/<hole_id>/ => 3D lines
+    #    /get_3d_model_for_hole/<hole_id>/ => 3D volume
+    callback = CustomJS(args=dict(source=source_2d), code='''
+        const inds = cb_obj.indices;
+        if (inds.length > 0) {
+            const hole_id = source.data.hole_id[inds[0]];
+
+            // 1) intervals & elements (vertical lines)
+            fetch(`/get_drill_hole_data/${hole_id}/`)
+              .then(r => r.json())
+              .then(data => {
+                  console.log("DrillHole intervals:", data);
+                  window.create3DVisualization(data);
+              });
+
+            // 2) 3D IDW volume data
+            fetch(`/get_3d_model_for_hole/${hole_id}/`)
+              .then(r => r.json())
+              .then(data => {
+                  console.log("Volume data for hole:", data);
+                  createVolumePlot(data);
+              })
+              .catch(err => console.error("Volume fetch error:", err));
+        }
+    ''')
+
+    source_2d.selected.js_on_change('indices', callback)
+
+    script, div = components(p)
+
+    return render(request, 'map.html', {
+        'bokeh_script': script,
+        'bokeh_div': div,
+    })
+
+
+#######################################
+# 2) get_drill_hole_data => intervals
+#######################################
+def get_drill_hole_data(request, hole_id):
+    """
+    Return JSON with intervals & element values for vertical lines in 3D.
+    """
+    try:
+        hole = DrillHole.objects.get(hole_id=hole_id)
+
+        # intervals
+        intervals = list(DrillInterval.objects.filter(
+            drill_hole=hole
+        ).order_by('depth_from').values(
+            'depth_from', 'depth_to', 'lithology'
+        ))
+
+        # element values
+        elements = list(ElementValue.objects.filter(
+            analysis__interval__drill_hole=hole
+        ).values(
+            'element',
+            'value',
+            'analysis__interval__depth_from',
+            'analysis__interval__depth_to'
+        ))
+
+        data = {
+            'hole_id': hole_id,
+            'easting': hole.easting,
+            'northing': hole.northing,
+            'intervals': intervals,
+            'elements': elements
+        }
+        return JsonResponse(data)
+    except DrillHole.DoesNotExist:
+        return JsonResponse({'error': f'Drill hole {hole_id} not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+#######################################
+# 3) get_3d_model_for_hole => IDW volume
+#######################################
+def get_3d_model_for_hole(request, hole_id):
+    """
+    Returns JSON with { x, y, z, u } for a more 'land-like' 3D volume via IDW.
+    - Uses a larger bounding box: +/-100m in XY around the hole
+    - Uses a bigger grid: nx=30, ny=30, nz=20
+    - Depth is from 0 to the max interval depth.
+    - IDW radius is bigger (e.g. 999999) so we capture all intervals,
+      or 120.0 if you want a radial limit.
+    - If you want to see negative Z for downward, just invert the sign.
+    """
+    from django.db.models import Avg
+    import numpy as np
+    import pandas as pd
+    from django.http import JsonResponse
+    from .models import DrillHole, DrillInterval, ElementValue
+    
+    try:
+        # 1) Fetch the hole
+        hole = DrillHole.objects.get(hole_id=hole_id)
+        
+        # 2) Gather intervals => average U
+        intervals_qs = DrillInterval.objects.filter(drill_hole=hole).order_by('depth_from')
+        rows = []
+        for interval in intervals_qs:
+            u_qs = ElementValue.objects.filter(
+                analysis__interval=interval,
+                element='U'
+            )
+            if u_qs.exists():
+                u_avg = u_qs.aggregate(Avg('value'))['value__avg'] or 0.0
+            else:
+                u_avg = 0.0
+            
+            mid = 0.5*(interval.depth_from + interval.depth_to)
+            # If you prefer negative depth for "down", do `-mid` here
+            rows.append({'depth_mid': mid, 'U_ppm': u_avg})
+        
+        df = pd.DataFrame(rows)
+        if df.empty:
+            return JsonResponse({'error': f"No intervals for hole {hole_id}"}, status=404)
+        
+        # 3) Define bounding box + grid
+        e0, n0 = hole.easting, hole.northing
+        min_depth = 0.0
+        max_depth = df['depth_mid'].max()
+        
+        # A bigger bounding box so you see a "land-like" shape horizontally
+        box_xy = 100.0  # +/- 100m
+        nx, ny, nz = 30, 30, 20  # more refined grid
+        xvals = np.linspace(e0 - box_xy, e0 + box_xy, nx)
+        yvals = np.linspace(n0 - box_xy, n0 + box_xy, ny)
+        zvals = np.linspace(min_depth, max_depth, nz)  # or invert sign if you want negative
+        
+        X, Y, Z = np.meshgrid(xvals, yvals, zvals, indexing='ij')
+        Xf = X.flatten()
+        Yf = Y.flatten()
+        Zf = Z.flatten()
+        
+        # 4) Prepare the intervals as "points" for IDW
+        #    If you want negative downward, do:  depths = -df['depth_mid']
+        #    Otherwise just keep them as is
+        borehole_depths = df['depth_mid'].values
+        borehole_u      = df['U_ppm'].values
+        
+        # 5) IDW Interpolation
+        p = 2.0
+        # Larger radius => basically includes all intervals
+        radius = 999999.0  # or 120.0 if you want a limit
+        Uf = np.zeros_like(Xf)
+        
+        for i in range(len(Xf)):
+            dx = e0 - Xf[i]
+            dy = n0 - Yf[i]
+            # distance in 3D if you want to consider depth variation:
+            dists = np.sqrt(dx**2 + dy**2 + (borehole_depths - Zf[i])**2)
+            
+            # optional radius filter
+            mask = (dists < radius)
+            if not np.any(mask):
+                Uf[i] = 0.0
+                continue
+            
+            dd = dists[mask]
+            uu = borehole_u[mask]
+            
+            w = 1.0 / (dd**p + 1e-9)
+            Uf[i] = np.sum(uu * w) / np.sum(w)
+        
+        # 6) Return as JSON
+        data = {
+            'x': Xf.tolist(),
+            'y': Yf.tolist(),
+            'z': Zf.tolist(),
+            'u': Uf.tolist()
+        }
+        return JsonResponse(data)
+    
+    except DrillHole.DoesNotExist:
+        return JsonResponse({'error': f"Hole {hole_id} not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+from django.shortcuts import render
+from .models import DrillHole, DrillInterval, ElementValue
+from django.db.models import Avg, Max, Count
+import pandas as pd
+
+# ... (Your existing functions: process_aura_file, upload_excel, generate_report_pdf, etc.) ...
+
+# --- Functions for the index view (using Chart.js) ---
+
+def calculate_summary_stats():
+    """Calculates summary statistics for the dashboard."""
+    total_drill_holes = DrillHole.objects.count()
+    average_uranium = ElementValue.objects.filter(element='U').aggregate(Avg('value'))['value__avg'] or 0
+    granite_intervals = DrillInterval.objects.filter(lithology__icontains='granite').count()
+    max_uranium = ElementValue.objects.filter(element='U').aggregate(Max('value'))['value__max'] or 0
+    return total_drill_holes, average_uranium, granite_intervals, max_uranium
+
+def prepare_data_for_charts_index():
+    """Prepares data for Chart.js charts on the index page."""
+    # ... (Same data preparation logic as before) ...
+    intervals = DrillInterval.objects.select_related('drill_hole').prefetch_related('chemical_analyses__element_values').all()
+    data_rows = []
+    for interval in intervals:
+        hole = interval.drill_hole
+        avg_depth = (interval.depth_from + interval.depth_to) / 2.0
+        for analysis in interval.chemical_analyses.all():
+            element_map = {ev.element.upper(): ev.value for ev in analysis.element_values.all()}
+            row_dict = {
+                'hole_id': hole.hole_id,
+                'depth': avg_depth,
+                'lithology': interval.lithology.lower() if interval.lithology else "unknown",
+                'U': element_map.get('U', 0),
+            }
+            data_rows.append(row_dict)
+
+    df = pd.DataFrame(data_rows)
+
+    # Convert relevant columns to numeric, handling non-numeric values
+    df['U'] = pd.to_numeric(df['U'], errors='coerce')
+    df['depth'] = pd.to_numeric(df['depth'], errors='coerce')
+    df.dropna(subset=['U', 'depth'], inplace=True)
+
+    return df
+
+# --- New index view ---
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+
+def index(request):
+    # Data aggregations
+    total_drill_holes = DrillHole.objects.count()
+    average_uranium = ElementValue.objects.filter(element='U').aggregate(Avg('value'))['value__avg'] or 0
+    granite_intervals = DrillInterval.objects.filter(lithology__icontains='granite').count()
+    max_uranium = ElementValue.objects.filter(element='U').aggregate(Max('value'))['value__max'] or 0
+    
+    # Prepare data for charts
+    intervals = DrillInterval.objects.select_related('drill_hole').prefetch_related('chemical_analyses__element_values').all()
+    data_rows = []
+    for interval in intervals:
+        hole = interval.drill_hole
+        avg_depth = (interval.depth_from + interval.depth_to) / 2.0
+        for analysis in interval.chemical_analyses.all():
+            element_map = {ev.element.upper(): ev.value for ev in analysis.element_values.all()}
+            row_dict = {
+                'hole_id': hole.hole_id,
+                'depth': float(avg_depth),  # Convert to float
+                'lithology': interval.lithology.lower() if interval.lithology else "unknown",
+                'U': float(element_map.get('U', 0)),  # Convert to float
+            }
+            data_rows.append(row_dict)
+    
+    df = pd.DataFrame(data_rows)
+    
+    # Prepare data for Chart.js charts and convert to JSON-safe types
+    lithology_counts = df['lithology'].value_counts()
+    uranium_by_depth = df.groupby('depth')['U'].mean().reset_index()
+    
+    context = {
+        'total_drill_holes': total_drill_holes,
+        'average_uranium': round(float(average_uranium), 2),
+        'granite_intervals': granite_intervals,
+        'max_uranium': round(float(max_uranium), 2),
+        'lithology_labels': json.dumps(list(lithology_counts.index)),
+        'lithology_counts': json.dumps([float(x) for x in lithology_counts.values]),
+        'uranium_depth_labels': json.dumps([float(x) for x in uranium_by_depth['depth']]),
+        'uranium_depth_data': json.dumps([float(x) for x in uranium_by_depth['U']]),
+    }
+    
+    return render(request, 'index.html', context)
+
+def intro(request):
+    return render(request, 'intro.html')

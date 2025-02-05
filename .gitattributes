@@ -1,0 +1,11 @@
+# Fichiers texte généraux
+* text=auto
+
+# Fichiers Python avec LF
+*.py text eol=lf
+
+# Fichiers Shell avec LF
+*.sh text eol=lf
+
+# Fichiers Batch avec CRLF
+*.bat text eol=crlf
