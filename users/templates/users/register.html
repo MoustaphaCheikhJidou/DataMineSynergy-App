@@ -1,16 +1,45 @@
-{% extends "users/base.html" %}
-{% load crispy_forms_tags %}
-{% block content %} <br> <br> <br>
-    <div class="content-section">
-        <h2 class="mb-4">Register New Admin</h2>
-        <form method="POST">
-            {% csrf_token %}
-            <fieldset class="form-group">
-                {{ form|crispy }}
-            </fieldset>
-            <div class="form-group">
-                <button class="btn btn-outline-info" type="submit">Add Admin</button>
+{% extends 'users/base.html' %}
+{% load static %}
+{% block title %}DataMine Synergy - Inscription{% endblock %}
+{% block content %}
+
+        <div class="row justify-content-center h-100 align-items-center">
+            <div class="col-md-6">
+                <div class="authincation-content">
+                    <div class="row no-gutters">
+                        <div class="col-xl-12">
+                            <div class="auth-form">
+                                <div class="text-center mb-3">
+                                    <a href="{% url 'dashboard_view' %}"><img src="{% static 'logo-aura_blue.svg' %}" alt="Logo DataMine Synergy"></a>
+                                </div>
+                                <h4 class="text-center mb-4">Créez votre compte</h4>
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label class="mb-1"><strong>Nom d'utilisateur</strong></label>
+                                        <input type="text" class="form-control" name="username" placeholder="votre_nom_utilisateur">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="mb-1"><strong>Email</strong></label>
+                                        <input type="email" class="form-control" name="email" placeholder="votre.email@exemple.com">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="mb-1"><strong>Mot de passe</strong></label>
+                                        <input type="password" class="form-control" name="password" placeholder="Mot de passe">
+                                    </div>
+                                    <div class="text-center mt-4">
+                                        <button type="submit" class="btn btn-primary btn-block">Créer mon compte</button>
+                                    </div>
+                                </form>
+                                <div class="new-account mt-3">
+                                    <p>Vous avez déjà un compte ? <a class="text-primary" href="{% url 'login' %}">Connectez-vous</a></p>
+                                </div>
+                            </div><!-- auth-form -->
+                        </div>
+                    </div>
+                </div><!-- authincation-content -->
             </div>
-        </form>
+        </div>
     </div>
-{% endblock content %}
+</div>
+{% endblock %}

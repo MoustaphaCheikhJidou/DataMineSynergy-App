@@ -1,0 +1,218 @@
+  {% extends "base.html" %}
+  {% block content %}
+  <title>Drill Hole Visualization</title>
+
+  <!-- Bokeh CSS & JS -->
+  <link href="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.css" rel="stylesheet" type="text/css">
+  <link href="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.css" rel="stylesheet" type="text/css">
+  <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
+  <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.js"></script>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<style>
+  /* Main container for the entire layout */
+  .main-container {
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    width: 100%; /* Ensure it takes full width */
+    padding: 20px;
+    gap: 20px;
+  }
+
+  /* Container for the Bokeh map */
+  .map-container {
+    width: 100%; /* Full width for the map */
+    min-height: 600px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+  }
+
+  /* Container for the bottom two plots */
+  .bottom-container {
+    display: flex; /* Arrange items horizontally */
+    gap: 20px;
+    width: 100%;
+  }
+
+  /* Individual container for each bottom plot */
+  .plot-container {
+    flex: 1; /* Each plot takes equal space (50%) */
+    min-height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+  }
+</style>
+
+<div class="main-container">
+  <!-- Bokeh map (full width) -->
+  <div class="map-container" id="bokeh-map">
+    {{ bokeh_div|safe }}
+  </div>
+
+  <!-- Bottom container for the two Plotly plots -->
+  <div class="bottom-container">
+    <div class="plot-container" id="plotly-map"></div>
+    <div class="plot-container" id="plotly-3d-div"></div>
+  </div>
+</div>
+
+<!-- Bokeh script for the map -->
+{{ bokeh_script|safe }}
+<script>
+///////////////////////////////////////////
+// 1) create3DVisualization => intervals
+///////////////////////////////////////////
+function getColorForLithology(lithology) {
+  const key = String(lithology || '').trim().toUpperCase();
+  const colorMap = {
+    'SANDSTONE': '#FFD700',
+    'SHALE': '#808080',
+    'LIMESTONE': '#87CEEB',
+    'CALCRETE': '#8B4513',
+    'GRANITE': '#CD5C5C',
+    'COLLUVIUM': '#228B22',
+  };
+  return colorMap[key] || '#FF00FF';
+}
+
+window.create3DVisualization = function(data) {
+  console.log("Creating 3D lines for hole:", data.hole_id);
+  
+  let maxDepth = 0;
+  data.intervals.forEach(interval => {
+    if(interval.depth_to > maxDepth) maxDepth = interval.depth_to;
+  });
+
+  let traces = [];
+  data.intervals.forEach(interval => {
+    let elementValues = data.elements.filter(e =>
+      e.analysis__interval__depth_from === interval.depth_from &&
+      e.analysis__interval__depth_to   === interval.depth_to
+    );
+
+    let avgMap = {};
+    elementValues.forEach(ev => {
+      let eName = ev.element ? ev.element.toUpperCase() : "UNKNOWN";
+      if(!avgMap[eName]) avgMap[eName] = [];
+      avgMap[eName].push(ev.value);
+    });
+
+    let textParts = "";
+    for(const [elt, vals] of Object.entries(avgMap)) {
+      let s = vals.reduce((a,b) => a+b, 0)/vals.length;
+      textParts += `${elt}: ${s.toFixed(2)}<br>`;
+    }
+
+    let trace = {
+      type: 'scatter3d',
+      mode: 'lines+markers',
+      x: [data.easting, data.easting],
+      y: [data.northing, data.northing],
+      z: [-interval.depth_from, -interval.depth_to],
+      line: {
+        color: getColorForLithology(interval.lithology),
+        width: 8
+      },
+      marker: {
+        color: getColorForLithology(interval.lithology),
+        size: 4
+      },
+      name: interval.lithology,
+      text: [
+        `Depth: ${interval.depth_from}-${interval.depth_to} m<br>Lit: ${interval.lithology}<br>${textParts}`,
+        `Depth: ${interval.depth_from}-${interval.depth_to} m<br>Lit: ${interval.lithology}<br>${textParts}`
+      ],
+      hoverinfo: 'text'
+    };
+    traces.push(trace);
+  });
+
+  let layout = {
+    title: `Hole: ${data.hole_id} (Intervals)`,
+    scene: {
+      bgcolor: 'white',
+      aspectmode: 'manual',
+      aspectratio: { x:1, y:1, z:0.5 },
+      xaxis: {
+        title: 'Easting',
+        range: [data.easting - 50, data.easting + 50],
+      },
+      yaxis: {
+        title: 'Northing',
+        range: [data.northing - 50, data.northing + 50],
+      },
+      zaxis: {
+        title: 'Depth (m)',
+        range: [-(maxDepth + 10), 5]
+      }
+    },
+    margin: {l:0,r:0,b:0,t:40}
+  };
+
+  Plotly.newPlot('plotly-map', traces, layout);
+}
+
+
+///////////////////////////////////////////
+// 2) createVolumePlot => Multi-Iso Surfaces
+///////////////////////////////////////////
+function createVolumePlot(data) {
+  // data = { x: [...], y: [...], z: [...], u: [...] }
+  console.log("Creating layered iso-surfaces for hole");
+  
+  let mini = Math.min(...data.u);
+  let maxi = Math.max(...data.u);
+  console.log("U Range:", mini, maxi);
+
+  // We'll define a set of thresholds between min and max
+  // e.g. 6 thresholds
+  let thresholds = [];
+  let steps = 6;  // You can adjust
+  let stepSize = (maxi - mini) / (steps - 1);
+  for(let i=0; i<steps; i++){
+    let val = mini + i*stepSize;
+    thresholds.push(val);
+  }
+
+  // We'll build one iso-surface trace per threshold
+  let isoTraces = [];
+  thresholds.forEach((t, idx) => {
+    let trace = {
+      type: 'isosurface',
+      x: data.x,
+      y: data.y,
+      z: data.z,
+      value: data.u,
+      isomin: t,
+      isomax: t,
+      surface: { show: true },
+      opacity: 0.3,         // partial transparency for layering
+      colorscale: 'Viridis',
+      caps: {x_show:false, y_show:false, z_show:false},
+      showscale: false      // only show colorbar on the last
+    };
+    isoTraces.push(trace);
+  });
+
+  // Show colorbar only on last trace
+  isoTraces[isoTraces.length-1].showscale = true;
+
+  let layout = {
+    title: "Multi Iso-Surfaces (U ppm)",
+    scene: {
+      xaxis: { title: 'Easting'},
+      yaxis: { title: 'Northing'},
+      zaxis: { title: 'Depth'},
+      aspectmode: 'cube'
+    },
+    width: 800,
+    height: 600
+  };
+
+  Plotly.newPlot('plotly-3d-div', isoTraces, layout);
+}
+</script>
+{% endblock %}

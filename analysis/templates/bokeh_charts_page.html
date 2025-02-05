@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - Exploration Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Reset for Bokeh containers */
+    .bk-root {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    .bk-root .bk-plot-layout {
+        width: 100% !important;
+        height: auto !important;
+    }
+    /* Chart container styling */
+    .chart-container {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 30px;
+    }
+    .chart-card {
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .card-body {
+        padding: 1.5rem;
+        overflow: visible;
+    }
+    /* Dashboard container */
+    .dashboard-container {
+        width: 95%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    /* Bokeh specific styles */
+    .bk-root .bk-tab {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 8px 15px;
+        border-radius: 6px 6px 0 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .bk-root .bk-tab.bk-active {
+        background-color: #4361ee;
+        color: white;
+        border-color: #4361ee;
+    }
+    .bk-root .bk-tabs-header {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #dee2e6;
+    }
+    /* Chart title styling */
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2b2d42;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #4361ee;
+    }
+    /* Chart wrapper */
+    .chart-wrapper {
+        position: relative;
+        min-height: 200px;
+        margin: 0 auto;
+    }
+    .bokeh-chart {
+        margin: 0 auto;
+        text-align: center;
+    }
+    /* Loading indicator (if needed) */
+    .chart-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            width: 100%;
+            padding: 10px;
+        }
+        .chart-container {
+            padding: 10px;
+        }
+        .card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+<link href="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.css" rel="stylesheet">
+<link href="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.css" rel="stylesheet">
+<link href="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.2.min.css" rel="stylesheet">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="dashboard-container animate__animated animate__fadeInUp" style="margin-top:20px;">
+    <h2 class="mb-4 text-center">{{ page_title }}</h2>
+    
+    {% if div %}
+        <!-- For pages (like page 4) that return a combined Tabs container -->
+        <div class="chart-container">
+            <div class="chart-card">
+                <div class="card-body">
+                    <div class="chart-wrapper">
+                        <div class="bokeh-chart">
+                            {{ div|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- For pages that return two separate charts -->
+        <div class="row">
+            <div class="col-12 col-md-6 chart-container">
+                <div class="chart-card">
+                    <div class="card-body">
+                        <h3 class="chart-title">{{ chart1_title }}</h3>
+                        <div class="chart-wrapper">
+                            <div class="bokeh-chart">
+                                {{ div1|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 chart-container">
+                <div class="chart-card">
+                    <div class="card-body">
+                         <h3 class="chart-title">{{ chart2_title }}</h3>
+                        <div class="chart-wrapper">
+                            <div class="bokeh-chart">
+                                {{ div2|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+    {% if script %}
+        {{ script|safe }}
+    {% else %}
+        {{ script1|safe }}
+        {{ script2|safe }}
+    {% endif %}
+    <!-- jQuery and jQuery UI -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <!-- Bokeh JS Libraries -->
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.2.min.js"></script>
+    <script>
+        // Resize Bokeh plots when window is resized (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            function resizeBokehPlots() {
+                if (window.Bokeh && Bokeh.documents.length > 0) {
+                    Bokeh.documents.forEach(function(doc) {
+                        doc.roots().forEach(function(root) {
+                            if (root.resize) {
+                                root.resize();
+                            }
+                        });
+                    });
+                }
+            }
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(resizeBokehPlots, 250);
+            });
+            setTimeout(resizeBokehPlots, 100);
+        });
+    </script>
+{% endblock extra_js %}

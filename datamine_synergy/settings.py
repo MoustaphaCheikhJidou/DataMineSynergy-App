@@ -71,7 +71,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pie',  # Nom exact de la base de données
         'USER': 'root',  # Utilisateur MySQL
-        'PASSWORD': '',  # Laissez vide si aucun mot de passe
+        'PASSWORD': 'momo@popo',  # Laissez vide si aucun mot de passe
         'HOST': 'localhost',  # Serveur local
         'PORT': '3306',       # Port par défaut pour MySQL
         'OPTIONS': {
@@ -122,9 +122,15 @@ STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
+LOGIN_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL ='/media/'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4" 
 LOGIN_URL='login'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'elmoustapha.cheikh.jiddou@gmail.com'
+EMAIL_HOST_PASSWORD = 'rmjt ndxq amwi oarc'

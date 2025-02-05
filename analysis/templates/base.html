@@ -1,46 +1,126 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
-
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="keywords" content="admin, dashboard">
-  <meta name="author" content="DexignZone">
+  <meta name="keywords" content="DataMine Synergy, admin, dashboard">
+  <meta name="author" content="SID & MPG">
   <meta name="robots" content="index, follow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Dompet : Payment Admin Template">
-  <meta property="og:title" content="Dompet : Payment Admin Template">
-  <meta property="og:description" content="Dompet : Payment Admin Template">
-  <meta property="og:image" content="https://dompet.dexignlab.com/xhtml/social-image.png">
+  <meta name="description" content="DataMine Synergy - Dashboard">
+  <meta property="og:title" content="DataMine Synergy - Dashboard">
+  <meta property="og:description" content="Plateforme de DataMine Synergy">
+  <meta property="og:image" content="https://www.votre-domaine.com/images/social-image.png">
   <meta name="format-detection" content="telephone=no">
 
-  <!-- PAGE TITLE HERE -->
-  <title>Admin Dashboard</title>
+  <title>{% block title %}DataMine Synergy{% endblock %}</title>
 
-  <!-- FAVICONS ICON -->
-  <link rel="shortcut icon" type="image/png" href="images/favicon.png">
-
+  <!-- Favicons Icon -->
+  <link rel="shortcut icon" type="image/png" href="{% static 'logo-aura_blue.svg' %}">
   <link href="{% static 'vendor/jquery-nice-select/css/nice-select.css' %}" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'vendor/nouislider/nouislider.min.css' %}">
-  <!-- Style css -->
+  <!--  Include Bootstrap CSS (if you haven't already) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="{% static 'css/style.css' %}" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
-
+  {% block extra_head %}{% endblock %}
   <style>
+    /* Main container for the entire layout */
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      /* Stack elements vertically */
+      width: 100%;
+      /* Ensure it takes full width */
+      padding: 20px;
+      gap: 20px;
+    }
 
+    /* Container for the Bokeh map */
+    .map-container {
+      width: 100%;
+      /* Full width for the map */
+      min-height: 600px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    /* Container for the bottom two plots */
+    .bottom-container {
+      display: flex;
+      /* Arrange items horizontally */
+      gap: 20px;
+      width: 100%;
+    }
+
+    /* Individual container for each bottom plot */
+    .plot-container {
+      flex: 1;
+      /* Each plot takes equal space (50%) */
+      min-height: 500px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    /* Active link in sidebar */
+    .dlabnav .metismenu li>a.active {
+      color: #257280;
+      /* Or your desired active link color */
+      background-color: #f5f5f5;
+      /* Or your desired active link background */
+    }
+
+    /* Style for the icon of the active link */
+    .dlabnav .metismenu li>a.active>i {
+      color: #257280;
+      /* Or your desired active link icon color */
+    }
+
+    /* Wrapping long text in the sidebar */
+    .dlabnav .metismenu li>a {
+      white-space: normal;
+      /* Allow text to wrap */
+      word-wrap: break-word;
+      /* Break long words if needed */
+      line-height: 1.2;
+      /* Adjust line height for readability */
+    }
+     /* Active link in sidebar */
+    .dlabnav .metismenu li>a.active {
+      color: #257280;
+      background-color: #f5f5f5;
+    }
+
+    /* Style for the icon of the active link */
+    .dlabnav .metismenu li>a.active>i {
+      color: #fff;
+      /* White icon color (example) */
+      background-color: transparent;
+    }
+
+    /* Wrapping long text in the sidebar */
+    .dlabnav .metismenu li>a {
+      white-space: normal;
+      word-wrap: break-word;
+      line-height: 1.2;
+      padding-top: 10px;
+      /* Add vertical padding */
+      padding-bottom: 10px;
+    }
+
+    /* Dropdown item adjustments */
+    .dlabnav .metismenu ul a {
+      padding: 8px 8px 8px 50px;
+      font-size: 14px;
+      /* Adjust if needed */
+    }
   </style>
-  {% block style %}
-  {% endblock style %}
 </head>
 
-<body style="background-color: #fff;">
+<body>
 
-  <!--*******************
-        Preloader start
-    ********************-->
   <div id="preloader">
     <div class="waviy">
       <span style="--i:1">L</span>
@@ -55,25 +135,12 @@
       <span style="--i:10">.</span>
     </div>
   </div>
-  <!--*******************
-        Preloader end
-    ********************-->
 
-  <!--**********************************
-        Main wrapper start
-    ***********************************-->
   <div id="main-wrapper">
-
-    <!--**********************************
-            Nav header start
-        ***********************************-->
     <div class="nav-header">
       <a href="{% url 'dashboard_view' %}" class="brand-logo">
-        <!-- Replace with a more concise icon -->
-        <img src="{% static 'logo esp.png' %}" width="180" height="80" alt="">
-        <span class="brand-title" style="color: #193B62; font-weight: bold; margin-left: 10px;">
-
-        </span>
+        <img src="{% static 'logo-aura_blue.svg' %}" alt="DataMine Synergy Logo" id="logo"
+          data-alt-src="{% static 'images/logo-full.png' %}" class="custom-logo" width="80">
       </a>
       <div class="nav-control">
         <div class="hamburger">
@@ -81,177 +148,198 @@
         </div>
       </div>
     </div>
-    <!--**********************************
-            Nav header end
-        ***********************************-->
 
-    <!--**********************************
-            Header start
-        ***********************************-->
+    <div class="chatbox">
+      <!-- Chat content (if you have chat functionality) -->
+    </div>
+
     <div class="header">
       <div class="header-content">
         <nav class="navbar navbar-expand">
           <div class="collapse navbar-collapse justify-content-between">
             <div class="header-left">
               <div class="dashboard_bar">
-                Geochemical Analysis Dashboard
+                {% block dashboard_title %}Uranium{% endblock %}
               </div>
             </div>
             <ul class="navbar-nav header-right">
               <li class="nav-item">
-                <div class="input-group search-area">
-                  <input type="text" class="form-control" placeholder="Search here...">
-                  <span class="input-group-text"><a href="javascript:void(0)"><i
-                        class="flaticon-381-search-2"></i></a></span>
-                </div>
-              </li>
-              <li class="nav-item dropdown notification_dropdown">
-                <a class="nav-link" href="javascript:void(0);" data-bs-toggle="dropdown">
-                  <i class="fas fa-bell"></i>
-                  <span class="badge light text-white bg-primary rounded-circle">2</span>
-                </a>
-                <!-- ... (Rest of the notification dropdown code - you can keep this) ... -->
-              </li>
-
-              <li class="nav-item">
-                <a href="{% url 'generate_report_pdf' %}" class="btn btn-primary d-sm-inline-block d-none">Generate
-                  Report<i class="las la-signal ms-3 scale5"></i></a>
+                {% block generate_report_button %}
+                <a href="{% url 'generate_report_pdf' %}" class="btn btn-primary d-sm-inline-block d-none">Générer un
+                  rapport <i class="las la-signal ms-3 scale5"></i></a>
+                {% endblock %}
               </li>
             </ul>
           </div>
         </nav>
       </div>
     </div>
-    <!--**********************************
-            Header end ti-comment-alt
-        ***********************************-->
 
-    <!--**********************************
-            Sidebar start
-        ***********************************-->
     <div class="dlabnav">
       <div class="dlabnav-scroll">
         <ul class="metismenu" id="menu">
           <li class="dropdown header-profile">
-            <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
-              {% if user.profile.image %}
-              <img src="{{ user.profile.image.url }}" width="20" alt="Profile Picture">
-              {% else %}
-              <img src="{% static 'images/default_profile_pic.jpg' %}" width="20" alt="Default Profile Picture">
-              {% endif %}
+            <a class="nav-link" href="/profile" role="button" data-bs-toggle="dropdown">
+              <img
+                src="{% if user.profile.image %}{{ user.profile.image.url }}{% else %}{% static 'images/default-user.png' %}{% endif %}"
+                alt="Profile" width="20">
               <div class="header-info ms-3">
-                <span class="font-w600 ">Hi,<b>{{ user.username }}</b></span>
+                {% if user.is_authenticated %}
+                <span class="font-w600">Hi, <b>{{ user.username }}</b></span>
                 <small class="text-end font-w400">{{ user.email }}</small>
+                {% else %}
+                <span class="font-w600">Hi, <b>Guest</b></span>
+                {% endif %}
               </div>
             </a>
             <div class="dropdown-menu dropdown-menu-end">
+              {% if user.is_authenticated %}
               <a href="{% url 'profile' %}" class="dropdown-item ai-icon">
-                <i class="fas fa-user text-primary"></i>
-                <span class="ms-2">Profile </span>
+                <svg id="icon-user1" xmlns="http://www.w3.org/2000/svg" class="text-primary" width="18" height="18"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span class="ms-2">Profil</span>
               </a>
-              <a href="#" onclick="logout()" class="dropdown-item ai-icon">
-                <i class="fas fa-sign-out-alt text-danger"></i>
-                <span class="ms-2">Logout </span>
+              <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item ai-icon">
+                  <svg id="icon-logout" xmlns="http://www.w3.org/2000/svg" class="text-danger" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span class="ms-2">Déconnexion</span>
+                </button>
+              </form>
+              {% else %}
+              <a href="{% url 'login' %}" class="dropdown-item ai-icon">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                <span class="ms-2">Se connecter</span>
               </a>
+              {% endif %}
             </div>
           </li>
-          <li><a href="{% url 'dashboard_view' %}" class="ai-icon" aria-expanded="false">
+          <li>
+            <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
               <i class="flaticon-025-dashboard"></i>
-              <span class="nav-text">Dashboard</span>
+              <span class="nav-text">Tableau de bord</span>
             </a>
+            <ul aria-expanded="false">
+              <li><a href="{% url 'dashboard_view' %}">Dashboard</a></li>
+              <li><a href="{% url 'intro' %}">Introduction</a></li>
+              
+            </ul>
           </li>
-          <li><a href="{% url 'upload_excel' %}" class="ai-icon" aria-expanded="false">
-              <i class="fas fa-upload"></i>
-              <span class="nav-text">Upload</span>
+          <li>
+            <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+              <i class="flaticon-041-graph"></i>
+              <span class="nav-text">Bokeh Charts</span>
             </a>
+            <ul aria-expanded="false">
+              <li>
+                <a class="dropdown-item" href="{% url 'bokeh_charts_page' page_id='1' %}" data-bs-toggle="tooltip"
+                  data-bs-placement="right" title="Uranium vs Depth & Element Correlations">
+                   U vs Depth & Elem.
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'bokeh_charts_page' page_id='2' %}" data-bs-toggle="tooltip"
+                  data-bs-placement="right" title= "U & Lithology">
+                  U & Lithology
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'bokeh_charts_page' page_id='3' %}" data-bs-toggle="tooltip"
+                  data-bs-placement="right" title="Matrix corr & Uranium Distribution">
+                  Matrix corr & U Dist
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'bokeh_charts_page' page_id='4' %}" data-bs-toggle="tooltip"
+                  data-bs-placement="right" title="Scatter Plot & Statistics">
+                   Scatter & Stats
+                </a>
+              </li>
+            </ul>
           </li>
-          <li><a href="{% url 'register' %}" class="ai-icon" aria-expanded="false">
-              <i class="fas fa-user-plus"></i>
-              <span class="nav-text">Add Admin</span>
+          <li><a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+              <i class="fas fa-map"></i>
+              <span class="nav-text">Maps</span>
             </a>
+            <ul aria-expanded="false">
+              <li><a href="{% url 'maps' %}">2D & 3D Cartographie</a></li>
+            </ul>
           </li>
-        </ul>
+          {% block extra_sidebar %}{% endblock %}
+          </ul>
+          <div class="copyright">
+            <p><strong>DataMine Synergy</strong> © 2023 Tous droits réservés</p>
+            <p class="fs-12">Conçu avec <span class="heart"></span> par SID & MPG</p>
+          </div>
+          </div>
+          </div>
 
-        <div class="copyright">
-          <p><strong>ESP</strong> © 2025 All Rights Reserved</p>
-          <p class="fs-12">Made with <span class="heart"></span> by Us</p>
-        </div>
-      </div>
-    </div>
-    <!--**********************************
-            Sidebar end
-        ***********************************-->
-
-    <!--**********************************
-            Content body start
-        ***********************************-->
     <div class="content-body">
       <div class="container-fluid">
         {% block content %}
         {% endblock %}
       </div>
     </div>
-    <!--**********************************
-            Content body end
-        ***********************************-->
 
-    <!--**********************************
-            Footer start
-        ***********************************-->
     <div class="footer">
       <div class="copyright">
-
+        <p>Copyright © Designed & Developed by <a href="" target="_blank">SID & MPG</a> 2025</p>
       </div>
     </div>
-    <!--**********************************
-            Footer end
-        ***********************************-->
   </div>
-  <!--**********************************
-        Main wrapper end
-    ***********************************-->
 
-  <!--**********************************
-        Scripts
-    ***********************************-->
-  {% block scripts %}
-  {% endblock %}
   <!-- Required vendors -->
+    {% block extra_js %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="{% static 'vendor/global/global.min.js' %}"></script>
-  <script src="{% static 'vendor/chart.js/Chart.bundle.min.js' %}"></script>
   <script src="{% static 'vendor/jquery-nice-select/js/jquery.nice-select.min.js' %}"></script>
-
-  <!-- Apex Chart -->
-  <script src="{% static 'vendor/apexchart/apexchart.js' %}"></script>
-  <script src="{% static 'vendor/nouislider/nouislider.min.js' %}"></script>
-  <script src="{% static 'vendor/wnumb/wNumb.js' %}"></script>
-
-  <!-- Dashboard 1 -->
-  <script src="{% static 'js/dashboard/dashboard-1.js' %}"></script>
-
   <script src="{% static 'js/custom.min.js' %}"></script>
   <script src="{% static 'js/dlabnav-init.js' %}"></script>
-  <script src="{% static 'js/demo.js' %}"></script>
   <script src="{% static 'js/styleSwitcher.js' %}"></script>
+  <!-- Bootstrap JS (for tooltips) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    function logout() {
-      // Create a form element
-      var form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '{% url "logout" %}';
+    // Get the current URL path
+    var currentPath = window.location.pathname;
 
-      // Add CSRF token input
-      var csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = 'csrfmiddlewaretoken';
-      csrfInput.value = '{{ csrf_token }}';
-      form.appendChild(csrfInput);
+    // Iterate through each link in the sidebar
+    $('.dlabnav .metismenu a').each(function () {
+      var linkPath = $(this).attr('href');
 
-      // Append the form to the document and submit it
-      document.body.appendChild(form);
-      form.submit();
-    }
+      // Check if the link's href matches the current path
+      if (currentPath === linkPath) {
+        // Add the 'active' class to highlight the link
+        $(this).addClass('active');
+
+        // If the link is in a submenu, expand the parent ul
+        if ($(this).parents('ul').length) {
+          $(this).parents('ul').addClass('in'); // Add 'in' class for Bootstrap collapse
+          $(this).parents('ul').prev('a').attr('aria-expanded', 'true'); // Expand parent in MetisMenu
+        }
+      }
+    });
+    // Initialize Bootstrap tooltips
+    $(function () {
+      $('[data-bs-toggle="tooltip"]').tooltip();
+    });
+      $(document).ready(function () {
+          $('.header-profile .nav-link').on('click', function (event) {
+            event.stopPropagation(); // Stop event bubbling
+            $(this).siblings('.dropdown-menu').toggleClass('show'); // Toggle dropdown visibility
+          });
+        });
   </script>
+
 </body>
 
 </html>
